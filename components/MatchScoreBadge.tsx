@@ -5,29 +5,34 @@ interface Props {
   tier: MatchResult['fitTier'];
 }
 
-const TIER_STYLES: Record<MatchResult['fitTier'], string> = {
-  excellent: 'bg-emerald-50 text-emerald-700',
-  strong: 'bg-blue-50 text-blue-700',
-  good: 'bg-amber-50 text-amber-700',
-  stretch: 'bg-neutral-100 text-neutral-600',
+const TIER_STYLES: Record<MatchResult['fitTier'], { num: string; label: string }> = {
+  excellent: { num: 'text-forest', label: 'text-forest' },
+  strong:    { num: 'text-accent-deep', label: 'text-accent-deep' },
+  good:      { num: 'text-gold', label: 'text-gold' },
+  stretch:   { num: 'text-ink-muted', label: 'text-ink-faint' },
 };
 
 const TIER_LABEL: Record<MatchResult['fitTier'], string> = {
-  excellent: 'excellent fit',
-  strong: 'strong fit',
-  good: 'good fit',
-  stretch: 'stretch',
+  excellent: 'Excellent fit',
+  strong: 'Strong fit',
+  good: 'Good fit',
+  stretch: 'Stretch',
 };
 
 export default function MatchScoreBadge({ score, tier }: Props) {
   const rounded = Math.round(score);
+  const style = TIER_STYLES[tier];
   return (
     <div
-      className={`inline-flex flex-col items-center justify-center rounded-full px-3 py-1 leading-tight ${TIER_STYLES[tier]}`}
+      className="inline-flex flex-col items-end leading-none"
       aria-label={`Match score ${rounded} out of 100, ${TIER_LABEL[tier]}`}
     >
-      <span className="text-sm font-semibold tabular-nums">{rounded}</span>
-      <span className="text-[10px] uppercase tracking-wide">{TIER_LABEL[tier]}</span>
+      <span className={`font-display text-[40px] leading-none tabular-nums ${style.num}`}>
+        {rounded}
+      </span>
+      <span className={`mt-1 font-mono text-[9px] uppercase tracking-kicker ${style.label}`}>
+        {TIER_LABEL[tier]} · /100
+      </span>
     </div>
   );
 }

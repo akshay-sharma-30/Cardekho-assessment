@@ -7,11 +7,69 @@
 }
 
 html, body {
-  background: #fafaf7;
-  color: #0b0d12;
-  font-feature-settings: 'cv11', 'ss01';
+  background: #f5efe3;
+  color: #1c1611;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-feature-settings: 'cv11', 'ss01', 'ss03';
 }
 
 * {
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Paper grain — a low-frequency SVG noise overlay that gives the cream
+   background a subtle, hand-pressed feel. Fixed so it doesn't scroll. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  opacity: 0.5;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='240' height='240'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.18 0 0 0 0 0.14 0 0 0 0 0.10 0 0 0 0.06 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>");
+}
+
+body > * {
+  position: relative;
+  z-index: 1;
+}
+
+/* Editorial primitives — small reusable building blocks that show up across
+   pages. Defined here so component files stay focused on layout. */
+@layer components {
+  .kicker {
+    @apply font-mono text-[10px] uppercase tracking-kicker text-ink-muted;
+  }
+  .display {
+    @apply font-display tracking-tight;
+    font-feature-settings: 'ss01', 'ss02';
+  }
+  .display-italic {
+    @apply font-display italic font-medium;
+  }
+  .rule {
+    @apply h-px bg-rule;
+  }
+  .pill-mono {
+    @apply font-mono text-[10px] uppercase tracking-kicker px-2 py-1 border border-ink/15;
+  }
+  .editorial-card {
+    @apply bg-paper-dark/40 border border-rule/60 transition-all duration-500;
+  }
+  .editorial-card:hover {
+    @apply bg-paper-dark/70 border-ink/25;
+  }
+}
+
+/* Keep iframes (YouTube embeds) inside their containers cleanly */
+iframe {
+  border: 0;
+}
+
+/* Selection: warm coral wash */
+::selection {
+  background: #c5482e;
+  color: #f5efe3;
 }

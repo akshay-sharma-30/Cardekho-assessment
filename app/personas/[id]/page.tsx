@@ -28,7 +28,6 @@ function parseOverrides(
   const overrides: Partial<Persona['preferences']> = {};
   let hasOverride = false;
 
-  // Budget — clamp to [4, 40]
   if (searchParams.budget) {
     const n = Number(searchParams.budget);
     if (!Number.isNaN(n)) {
@@ -36,8 +35,6 @@ function parseOverrides(
       hasOverride = true;
     }
   }
-
-  // Seats — must be 4 / 5 / 7
   if (searchParams.seats) {
     const n = Number(searchParams.seats);
     if (VALID_SEATS.includes(n)) {
@@ -45,14 +42,10 @@ function parseOverrides(
       hasOverride = true;
     }
   }
-
-  // Transmission — must be manual or automatic
   if (searchParams.trans === 'manual' || searchParams.trans === 'automatic') {
     overrides.transmission = searchParams.trans as Transmission;
     hasOverride = true;
   }
-
-  // Fuel — comma-split, filter to valid FuelType values
   if (searchParams.fuel) {
     const parsed = searchParams.fuel
       .split(',')
@@ -63,8 +56,6 @@ function parseOverrides(
       hasOverride = true;
     }
   }
-
-  // Safety floor — must be 3 / 4 / 5
   if (searchParams.safety) {
     const n = Number(searchParams.safety);
     if (VALID_SAFETY.includes(n)) {
@@ -87,12 +78,12 @@ export default function PersonaPage({ params, searchParams }: PageProps) {
   };
 
   const allMatches: MatchResult[] = matchCarsToPersona(tweakedPersona, repo.allCars());
-  const aboveStretch = allMatches.filter((m: MatchResult) => m.fitTier !== 'stretch');
+  const aboveStretch = allMatches.filter((m) => m.fitTier !== 'stretch');
 
   const heroMatches = allMatches.slice(0, 3);
   const otherStrong = allMatches
     .slice(3, 8)
-    .filter((m: MatchResult) => m.fitTier !== 'stretch');
+    .filter((m) => m.fitTier !== 'stretch');
 
   const popular = repo.popularInPersona(persona.id, 3);
   const popularCars = popular
@@ -100,80 +91,114 @@ export default function PersonaPage({ params, searchParams }: PageProps) {
     .filter((c): c is NonNullable<ReturnType<typeof repo.car>> => c !== null);
 
   return (
-    <div className="space-y-14">
+    <div className="space-y-20">
+      {/* ── Back ─────────────────────────────────────────────────────────── */}
       <div>
         <Link
           href="/"
-          className="inline-flex items-center text-sm text-ink-muted hover:text-ink transition"
+          className="kicker inline-flex items-center gap-2 hover:text-ink transition"
         >
-          ← All personas
+          <span aria-hidden="true">←</span>
+          All personas
         </Link>
       </div>
 
-      <header className="space-y-5">
-        <div className="text-6xl leading-none" aria-hidden="true">
-          {persona.emoji}
+      {/* ── Persona masthead ─────────────────────────────────────────────── */}
+      <header className="grid grid-cols-12 gap-x-6 items-start">
+        <div className="col-span-12 md:col-span-2">
+          <p className="kicker">The reader</p>
+          <div className="text-5xl mt-3 leading-none" aria-hidden="true">
+            {persona.emoji}
+          </div>
         </div>
-        <div className="space-y-3 max-w-3xl">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight leading-tight">
-            {persona.title}
-          </h1>
-          <p className="text-base md:text-lg text-ink-muted leading-relaxed">
-            {persona.description}
-          </p>
-        </div>
-        <div className="space-y-2">
+        <div className="col-span-12 md:col-span-9 mt-6 md:mt-0">
           {hasOverride && (
-            <span className="inline-flex items-center rounded-full bg-accent-soft text-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-              Tweaked
+            <span className="kicker text-accent inline-block mb-3">
+              · Tweaked from default ·
             </span>
           )}
-          <PrefChips preferences={tweakedPersona.preferences} />
+          <h1 className="display text-[40px] md:text-[60px] leading-[1.02] tracking-tight text-ink">
+            {persona.title}
+          </h1>
+          <p className="mt-5 font-display italic text-xl text-ink-soft max-w-2xl leading-snug">
+            {persona.tagline}
+          </p>
+          <p className="mt-5 text-base text-ink-muted max-w-2xl leading-relaxed">
+            {persona.description}
+          </p>
+          <div className="mt-8">
+            <p className="kicker mb-3">The brief</p>
+            <PrefChips preferences={tweakedPersona.preferences} />
+          </div>
         </div>
       </header>
 
+      <div className="rule" />
+
+      {/* ── Tweak panel ──────────────────────────────────────────────────── */}
       <PersonaTweakPanel defaults={persona.preferences} personaId={persona.id} />
 
+      {/* ── Shortlist ────────────────────────────────────────────────────── */}
       {aboveStretch.length === 0 ? (
-        <section className="rounded-2xl border border-black/5 bg-white p-10 text-center">
-          <h2 className="text-lg font-semibold tracking-tight">
+        <section className="border border-rule p-12 text-center">
+          <p className="kicker">No fit found</p>
+          <h2 className="display text-3xl mt-3">
             We couldn&apos;t find a strong fit.
           </h2>
-          <p className="mt-2 text-sm text-ink-muted">
+          <p className="mt-3 text-ink-muted">
             Try widening your budget or shifting persona.
           </p>
         </section>
       ) : (
         <>
-          <section className="space-y-5">
-            <div className="flex items-end justify-between">
-              <h2 className="text-xl md:text-2xl font-semibold tracking-tight">
-                Your shortlist
-              </h2>
-              <span className="text-xs uppercase tracking-wider text-ink-muted">
-                Top {heroMatches.length} of {allMatches.length}
-              </span>
+          <section>
+            <div className="grid grid-cols-12 gap-x-6 mb-8">
+              <div className="col-span-12 md:col-span-2">
+                <p className="kicker">§ Shortlist</p>
+              </div>
+              <div className="col-span-12 md:col-span-9 flex items-end justify-between">
+                <h2 className="display text-3xl md:text-4xl">
+                  Your three.
+                </h2>
+                <span className="kicker">
+                  Top {heroMatches.length} of {allMatches.length}
+                </span>
+              </div>
             </div>
-            <div className="space-y-4">
-              {heroMatches.map((match: MatchResult) => (
+            <div className="border-y border-rule">
+              {heroMatches.map((match, i) => (
                 <CarCard
                   key={match.car.id}
                   match={match}
                   expanded
                   personaId={persona.id}
+                  index={i + 1}
                 />
               ))}
             </div>
           </section>
 
           {otherStrong.length > 0 && (
-            <section className="space-y-5">
-              <h2 className="text-lg md:text-xl font-semibold tracking-tight">
-                Other strong matches
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {otherStrong.map((match: MatchResult) => (
-                  <CarCard key={match.car.id} match={match} personaId={persona.id} />
+            <section>
+              <div className="grid grid-cols-12 gap-x-6 mb-8">
+                <div className="col-span-12 md:col-span-2">
+                  <p className="kicker">§ Honourable</p>
+                </div>
+                <div className="col-span-12 md:col-span-9">
+                  <h2 className="display text-2xl md:text-3xl">
+                    Other strong{' '}
+                    <span className="display-italic text-accent">candidates</span>
+                  </h2>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-rule border border-rule">
+                {otherStrong.map((match, i) => (
+                  <CarCard
+                    key={match.car.id}
+                    match={match}
+                    personaId={persona.id}
+                    index={heroMatches.length + i + 1}
+                  />
                 ))}
               </div>
             </section>
@@ -181,23 +206,38 @@ export default function PersonaPage({ params, searchParams }: PageProps) {
         </>
       )}
 
+      {/* ── Popular strip ────────────────────────────────────────────────── */}
       {popularCars.length > 0 && (
-        <section className="space-y-5">
-          <h2 className="text-lg md:text-xl font-semibold tracking-tight">
-            Popular with other {persona.title.toLowerCase()} buyers
-          </h2>
-          <div className="flex flex-wrap gap-3">
+        <section>
+          <div className="grid grid-cols-12 gap-x-6 mb-6">
+            <div className="col-span-12 md:col-span-2">
+              <p className="kicker">§ Word-of-mouth</p>
+            </div>
+            <div className="col-span-12 md:col-span-9">
+              <h2 className="display text-xl md:text-2xl">
+                Popular with other{' '}
+                <span className="display-italic text-accent">
+                  {persona.title.toLowerCase()}
+                </span>{' '}
+                buyers
+              </h2>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-x-6 gap-y-3 pl-0 md:pl-[16.666667%]">
             {popularCars.map((car) => (
               <Link
                 key={car.id}
                 href={`/cars/${car.id}?persona=${persona.id}`}
-                className="inline-flex items-center gap-3 bg-white rounded-full border border-black/5 px-4 py-2 text-sm shadow-sm hover:shadow-md transition"
+                className="group inline-flex items-baseline gap-3 border-b border-rule hover:border-ink py-1 transition-colors duration-300"
               >
-                <span className="font-medium">
+                <span className="font-display text-base text-ink">
                   {car.brand} {car.model}
                 </span>
-                <span className="text-ink-muted text-xs">
+                <span className="font-mono text-[11px] text-ink-muted tabular-nums">
                   ₹{car.priceLakh.toFixed(1)}L
+                </span>
+                <span className="font-display text-sm text-ink-faint transition-transform duration-300 group-hover:translate-x-0.5">
+                  →
                 </span>
               </Link>
             ))}

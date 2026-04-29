@@ -4,44 +4,55 @@ interface Props {
   preferences: Persona['preferences'];
 }
 
-function Chip({ children }: { children: React.ReactNode }) {
+function Tag({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-ink-soft/5 text-ink-soft px-3 py-1 text-xs">
+    <span className="font-mono text-[10px] uppercase tracking-kicker text-ink-soft border-b border-rule pb-1">
       {children}
     </span>
   );
 }
 
 export default function PrefChips({ preferences }: Props) {
-  const chips: React.ReactNode[] = [];
+  const tags: React.ReactNode[] = [];
 
-  chips.push(<Chip key="budget">{`≤ ₹${preferences.budgetMaxLakh}L`}</Chip>);
-  chips.push(<Chip key="seats">{`${preferences.seats} seats`}</Chip>);
+  tags.push(<Tag key="budget">{`≤ ₹${preferences.budgetMaxLakh}L`}</Tag>);
+  tags.push(<Tag key="seats">{`${preferences.seats} seats`}</Tag>);
 
   if (preferences.transmission) {
-    const label = preferences.transmission === 'automatic' ? 'AT preferred' : 'MT preferred';
-    chips.push(<Chip key="transmission">{label}</Chip>);
+    const label = preferences.transmission === 'automatic' ? 'AT' : 'MT';
+    tags.push(<Tag key="transmission">{label}</Tag>);
   }
 
   if (preferences.fuel.length > 0) {
-    chips.push(<Chip key="fuel">{preferences.fuel.join(' / ')}</Chip>);
+    tags.push(<Tag key="fuel">{preferences.fuel.join(' / ')}</Tag>);
   }
 
-  chips.push(<Chip key="safety">{`≥ ${preferences.safetyMin}★ safety`}</Chip>);
+  tags.push(<Tag key="safety">{`≥ ${preferences.safetyMin}★`}</Tag>);
 
   if (preferences.fuelEfficiencyKmplMin !== undefined) {
-    chips.push(
-      <Chip key="kmpl">{`≥ ${preferences.fuelEfficiencyKmplMin} kmpl`}</Chip>,
-    );
+    tags.push(<Tag key="kmpl">{`≥ ${preferences.fuelEfficiencyKmplMin} kmpl`}</Tag>);
   }
 
   if (preferences.parkingFriendly) {
-    chips.push(<Chip key="parking">parking-friendly</Chip>);
+    tags.push(<Tag key="parking">parking-friendly</Tag>);
   }
 
   if (preferences.highwayCommute) {
-    chips.push(<Chip key="highway">highway-ready</Chip>);
+    tags.push(<Tag key="highway">highway-ready</Tag>);
   }
 
-  return <div className="flex flex-wrap gap-2">{chips}</div>;
+  // Render as a centered row with em-dash separators between tags — feels like
+  // a magazine cover-line strip rather than a chip cloud.
+  return (
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+      {tags.map((tag, i) => (
+        <span key={i} className="flex items-center gap-x-4">
+          {tag}
+          {i < tags.length - 1 && (
+            <span className="font-mono text-[10px] text-rule">—</span>
+          )}
+        </span>
+      ))}
+    </div>
+  );
 }

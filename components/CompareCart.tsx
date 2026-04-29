@@ -24,11 +24,14 @@ export default function CompareCart() {
   return (
     <Link
       href="/compare"
-      className="inline-flex items-center gap-1.5 rounded-full bg-accent text-white px-3.5 py-1.5 text-xs font-medium shadow-sm hover:bg-accent/90 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+      className="group inline-flex items-baseline gap-2 border-b border-accent text-accent hover:border-ink hover:text-ink transition-colors duration-300 focus-visible:outline-none"
       aria-label={`Compare ${ids.length} cars`}
     >
-      <span aria-hidden="true" className="text-sm leading-none">⇄</span>
-      <span>Compare ({ids.length})</span>
+      <span className="font-mono text-[10px] uppercase tracking-kicker">Compare</span>
+      <span className="font-display italic text-base leading-none tabular-nums">
+        ({String(ids.length).padStart(2, '0')})
+      </span>
+      <span aria-hidden="true" className="font-display text-base transition-transform duration-300 group-hover:translate-x-0.5">→</span>
     </Link>
   );
 }

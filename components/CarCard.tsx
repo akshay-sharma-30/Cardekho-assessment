@@ -8,45 +8,44 @@ interface Props {
   match: MatchResult;
   expanded?: boolean;
   personaId?: string;
+  index?: number;
 }
 
-function Pill({ children }: { children: React.ReactNode }) {
+function SpecChip({ children }: { children: React.ReactNode }) {
   return (
-    <span className="inline-flex items-center rounded-full bg-ink-soft/5 text-ink-soft px-2.5 py-0.5 text-xs capitalize">
+    <span className="font-mono text-[10px] uppercase tracking-kicker text-ink-muted">
       {children}
     </span>
   );
 }
 
 function formatPrice(lakh: number): string {
-  return `₹${lakh.toFixed(1)} L`;
+  return `₹${lakh.toFixed(1)} L`;
 }
 
-export default function CarCard({ match, expanded = false, personaId }: Props) {
+export default function CarCard({ match, expanded = false, personaId, index }: Props) {
   const { car, score, fitTier, reasons } = match;
   const href = `/cars/${car.id}${personaId ? `?persona=${personaId}` : ''}`;
   const topReasons = reasons.filter((r) => r.passed).slice(0, 2);
 
-  const imageWidth = expanded ? 220 : 140;
-  const imageHeight = expanded ? 160 : 100;
+  const imageWidth = expanded ? 320 : 200;
+  const imageHeight = expanded ? 200 : 130;
 
   return (
     <Link
       href={href}
-      className={`group relative flex bg-white rounded-2xl border border-black/5 shadow-sm transition duration-200 hover:shadow-lg hover:-translate-y-0.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${
-        expanded ? 'w-full p-5 gap-5' : 'w-full p-4 gap-4'
+      className={`group relative flex bg-paper border-y border-rule transition-all duration-500 hover:bg-paper-dark/40 focus-visible:outline-none focus-visible:bg-paper-dark/60 ${
+        expanded ? 'flex-col md:flex-row w-full p-6 md:p-8 gap-6 md:gap-8' : 'flex-col w-full p-5 gap-4'
       }`}
     >
-      {/* Compare toggle — absolutely positioned to sit above the image without
-          disturbing the existing flex layout. The button itself stops
-          propagation so clicking it doesn't navigate the parent Link. */}
-      <div className={`absolute z-10 ${expanded ? 'top-3 left-3' : 'top-2 left-2'}`}>
+      {/* Compare toggle — absolutely positioned, doesn't disturb flow */}
+      <div className={`absolute z-10 ${expanded ? 'top-4 right-4' : 'top-3 right-3'}`}>
         <CompareButton carId={car.id} variant="compact" />
       </div>
 
       <div
-        className={`relative shrink-0 overflow-hidden rounded-xl bg-ink-soft/5 ${
-          expanded ? 'w-[220px] h-[160px]' : 'w-[140px] h-[100px]'
+        className={`relative shrink-0 overflow-hidden bg-paper-deep/40 ${
+          expanded ? 'w-full md:w-[320px] h-[200px]' : 'w-full h-[160px]'
         }`}
       >
         <Image
@@ -54,55 +53,77 @@ export default function CarCard({ match, expanded = false, personaId }: Props) {
           alt={`${car.brand} ${car.model} ${car.variant}`}
           width={imageWidth}
           height={imageHeight}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-[1.02]"
         />
+        {typeof index === 'number' && (
+          <span className="absolute top-3 left-3 kicker bg-paper/90 px-2 py-1">
+            №{String(index).padStart(2, '0')}
+          </span>
+        )}
       </div>
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <h3 className="font-semibold tracking-tight text-base truncate">
-              {car.brand} {car.model}
+            <p className="kicker mb-1.5">{car.brand}</p>
+            <h3 className="display text-2xl md:text-[28px] leading-[1.1] tracking-tight text-ink truncate">
+              {car.model}
             </h3>
-            <p className="text-xs text-ink-muted truncate">{car.variant}</p>
+            <p className="font-display italic text-ink-muted text-base mt-0.5">
+              {car.variant}
+            </p>
           </div>
           <div className="shrink-0">
             <MatchScoreBadge score={score} tier={fitTier} />
           </div>
         </div>
 
-        <div className="mt-2 font-semibold text-lg tabular-nums">
-          {formatPrice(car.priceLakh)}
+        {/* Price as the editorial price-tag — large, mono numerals, not a button */}
+        <div className="mt-4 flex items-baseline gap-3">
+          <span className="font-mono text-2xl tabular-nums text-ink tracking-tight">
+            {formatPrice(car.priceLakh)}
+          </span>
+          <span className="kicker">ex-showroom</span>
         </div>
 
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <Pill>{car.body.replace('-', ' ')}</Pill>
-          <Pill>{car.fuel}</Pill>
-          <Pill>{car.transmission}</Pill>
+        {/* Spec strip — mono uppercase, dot separators, not pill chips */}
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-1">
+          <SpecChip>{car.body.replace('-', ' ')}</SpecChip>
+          <span className="text-rule">·</span>
+          <SpecChip>{car.fuel}</SpecChip>
+          <span className="text-rule">·</span>
+          <SpecChip>{car.transmission}</SpecChip>
+          <span className="text-rule">·</span>
+          <SpecChip>{car.seats} seats</SpecChip>
         </div>
 
         {expanded && (
           <>
             {car.oneLiner && (
-              <p className="mt-3 italic text-sm text-ink-soft/80 border-l-2 border-accent/40 pl-3">
-                “{car.oneLiner}”
+              <p className="mt-6 font-display italic text-lg text-ink-soft leading-snug max-w-xl">
+                &ldquo;{car.oneLiner}&rdquo;
               </p>
             )}
             {topReasons.length > 0 && (
-              <ul className="mt-3 space-y-1">
+              <ul className="mt-6 space-y-2">
                 {topReasons.map((r, i) => (
                   <li
                     key={`${r.criterion}-${i}`}
-                    className="flex items-start gap-2 text-sm text-ink-soft"
+                    className="flex items-start gap-3 text-sm text-ink-soft"
                   >
-                    <span className="mt-0.5 inline-flex items-center justify-center w-4 h-4 rounded-full bg-emerald-50 text-emerald-700 text-[10px] shrink-0">
-                      ✓
+                    <span className="mt-[3px] font-mono text-[10px] tracking-kicker uppercase text-forest shrink-0">
+                      ✓ fits
                     </span>
-                    <span>{r.detail}</span>
+                    <span className="leading-relaxed">{r.detail}</span>
                   </li>
                 ))}
               </ul>
             )}
+            <div className="mt-6 pt-4 flex items-center gap-3 text-accent border-t border-rule/60">
+              <span className="kicker text-accent">Read the dossier</span>
+              <span className="block flex-1 h-px bg-accent/30 origin-left scale-x-50 transition-transform duration-500 group-hover:scale-x-100" />
+              <span className="font-display text-xl leading-none transition-transform duration-500 group-hover:translate-x-1">→</span>
+            </div>
           </>
         )}
       </div>

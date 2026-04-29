@@ -22,14 +22,14 @@ export default function CompareButton({ carId, variant = 'inline' }: Props) {
   const inCart = ids.includes(carId);
   const cartFull = ids.length >= MAX_ITEMS && !inCart;
 
-  // Reserve layout pre-mount so server-rendered card heights match client.
-  // We render an invisible placeholder of approximately the right size.
+  // Editorial pill: mono kicker, paper-toned background, no rounded-full.
   const isCompact = variant === 'compact';
-  const sizeClasses = isCompact ? 'px-2 py-1 text-xs' : 'px-4 py-2 text-sm';
-  const baseClasses = `inline-flex items-center gap-1 rounded-full font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 ${sizeClasses}`;
+  const sizeClasses = isCompact
+    ? 'px-2.5 py-1 text-[10px]'
+    : 'px-3.5 py-1.5 text-[11px]';
+  const baseClasses = `inline-flex items-center gap-1.5 font-mono uppercase tracking-kicker transition-all duration-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ink/60 ${sizeClasses}`;
 
   if (!mounted) {
-    // Invisible placeholder to keep layout stable across hydration.
     return (
       <span
         aria-hidden="true"
@@ -57,17 +57,15 @@ export default function CompareButton({ carId, variant = 'inline' }: Props) {
 
   if (inCart) {
     label = '✓ In compare';
-    stateClasses =
-      'border border-black/10 bg-ink-soft/5 text-ink-soft hover:bg-ink-soft/10';
+    stateClasses = 'border border-forest/40 bg-forest/10 text-forest';
   } else if (cartFull) {
-    label = `Cart full (${MAX_ITEMS})`;
-    stateClasses =
-      'border border-black/10 bg-neutral-100 text-ink-muted cursor-not-allowed opacity-70';
+    label = `Cart full · ${MAX_ITEMS}`;
+    stateClasses = 'border border-rule bg-paper-dark/40 text-ink-faint cursor-not-allowed';
     disabled = true;
   } else {
     label = '+ Compare';
     stateClasses =
-      'border border-accent text-accent bg-white hover:bg-accent hover:text-white';
+      'border border-ink/30 bg-paper text-ink-soft hover:bg-ink hover:text-paper hover:border-ink';
   }
 
   return (

@@ -12,7 +12,6 @@ interface Props {
 const FUEL_OPTIONS: FuelType[] = ['petrol', 'diesel', 'cng', 'hybrid', 'electric'];
 const SEATS_OPTIONS = [4, 5, 7];
 const SAFETY_OPTIONS = [3, 4, 5];
-
 const TRANSMISSION_OPTIONS = [
   { value: 'any', label: 'Any' },
   { value: 'manual', label: 'Manual' },
@@ -24,12 +23,36 @@ function clampBudget(n: number): number {
   return Math.min(40, Math.max(4, n));
 }
 
+// Reusable editorial toggle button — mono kicker, paper-toned, no rounded-full.
+function ToggleButton({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`font-mono text-[10px] uppercase tracking-kicker px-3 py-2 border transition-all duration-300 ${
+        active
+          ? 'bg-ink text-paper border-ink'
+          : 'bg-paper text-ink-soft border-rule hover:border-ink hover:text-ink'
+      }`}
+    >
+      {children}
+    </button>
+  );
+}
+
 export default function PersonaTweakPanel({ defaults, personaId }: Props) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [open, setOpen] = useState(false);
 
-  // ─── Derive current effective values from URL or defaults ──────────────
   const budgetParam = searchParams.get('budget');
   const seatsParam = searchParams.get('seats');
   const transParam = searchParams.get('trans');
@@ -61,7 +84,6 @@ export default function PersonaTweakPanel({ defaults, personaId }: Props) {
     ? currentSafetyRaw
     : defaults.safetyMin;
 
-  // ─── Helper to mutate one param and push the URL ───────────────────────
   function pushParams(mutate: (p: URLSearchParams) => void) {
     const next = new URLSearchParams(searchParams.toString());
     mutate(next);
@@ -71,72 +93,43 @@ export default function PersonaTweakPanel({ defaults, personaId }: Props) {
     });
   }
 
-  function onBudgetChange(v: number) {
-    pushParams((p) => {
-      p.set('budget', String(v));
-    });
-  }
-
-  function onSeatsChange(v: number) {
-    pushParams((p) => {
-      p.set('seats', String(v));
-    });
-  }
-
-  function onTransChange(v: 'any' | 'manual' | 'automatic') {
-    pushParams((p) => {
-      if (v === 'any') p.delete('trans');
-      else p.set('trans', v);
-    });
-  }
-
-  function toggleFuel(f: FuelType) {
+  const onBudgetChange = (v: number) => pushParams((p) => p.set('budget', String(v)));
+  const onSeatsChange = (v: number) => pushParams((p) => p.set('seats', String(v)));
+  const onTransChange = (v: 'any' | 'manual' | 'automatic') =>
+    pushParams((p) => (v === 'any' ? p.delete('trans') : p.set('trans', v)));
+  const toggleFuel = (f: FuelType) => {
     const next = currentFuel.includes(f)
       ? currentFuel.filter((x) => x !== f)
       : [...currentFuel, f];
     pushParams((p) => {
-      if (next.length === 0) {
-        // Empty means "no override" — clear so we don't end up with zero allowed fuels
-        p.delete('fuel');
-      } else {
-        p.set('fuel', next.join(','));
-      }
+      if (next.length === 0) p.delete('fuel');
+      else p.set('fuel', next.join(','));
     });
-  }
-
-  function onSafetyChange(v: number) {
-    pushParams((p) => {
-      p.set('safety', String(v));
-    });
-  }
-
-  function onReset() {
-    router.replace(`/personas/${personaId}`, { scroll: false });
-  }
+  };
+  const onSafetyChange = (v: number) => pushParams((p) => p.set('safety', String(v)));
+  const onReset = () => router.replace(`/personas/${personaId}`, { scroll: false });
 
   const hasOverride =
     !!budgetParam || !!seatsParam || !!transParam || !!fuelParam || !!safetyParam;
 
   return (
-    <section className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
+    <section className="border border-rule bg-paper-dark/30">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
-        className="flex w-full items-center justify-between gap-3 text-left"
+        className="flex w-full items-center justify-between gap-4 text-left p-6 md:p-8 hover:bg-paper-dark/50 transition-colors duration-300"
         aria-expanded={open}
       >
-        <div className="flex items-center gap-3">
-          <h3 className="text-base md:text-lg font-semibold tracking-tight">
-            Tweak the fit
+        <div className="flex items-baseline gap-4">
+          <span className="kicker">§ Editor&apos;s tools</span>
+          <h3 className="display text-xl md:text-2xl tracking-tight">
+            Tweak the{' '}
+            <span className="display-italic text-accent">fit</span>
           </h3>
-          {hasOverride && (
-            <span className="inline-flex items-center rounded-full bg-accent-soft text-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
-              Tweaked
-            </span>
-          )}
+          {hasOverride && <span className="kicker text-accent">· active</span>}
         </div>
         <span
-          className={`text-ink-muted transition-transform duration-200 ${
+          className={`font-display text-2xl text-ink-muted transition-transform duration-500 ${
             open ? 'rotate-180' : ''
           }`}
           aria-hidden="true"
@@ -146,13 +139,13 @@ export default function PersonaTweakPanel({ defaults, personaId }: Props) {
       </button>
 
       {open && (
-        <div className="mt-5 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="px-6 md:px-8 pb-8 space-y-8 border-t border-rule pt-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-10 gap-y-8">
             {/* Budget */}
-            <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <label className="text-sm font-medium text-ink-soft">Budget cap</label>
-                <span className="text-sm font-semibold text-accent">
+            <div className="space-y-3">
+              <div className="flex items-baseline justify-between">
+                <p className="kicker">Budget ceiling</p>
+                <span className="font-mono text-base tabular-nums text-ink">
                   {`₹${currentBudget.toFixed(1)} L`}
                 </span>
               </div>
@@ -165,119 +158,84 @@ export default function PersonaTweakPanel({ defaults, personaId }: Props) {
                 onChange={(e) => onBudgetChange(Number(e.target.value))}
                 className="w-full accent-accent"
               />
-              <div className="flex justify-between text-[10px] text-ink-muted uppercase tracking-wider">
-                <span>₹4L</span>
-                <span>₹40L</span>
+              <div className="flex justify-between font-mono text-[10px] uppercase tracking-kicker text-ink-muted">
+                <span>₹4 L</span>
+                <span>₹40 L</span>
               </div>
             </div>
 
             {/* Seats */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-soft">Required seats</label>
+            <div className="space-y-3">
+              <p className="kicker">Required seats</p>
               <div className="flex flex-wrap gap-2">
-                {SEATS_OPTIONS.map((s) => {
-                  const active = currentSeats === s;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => onSeatsChange(s)}
-                      className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                        active
-                          ? 'bg-accent text-white border-accent'
-                          : 'bg-white text-ink-soft border-black/10 hover:border-accent/50'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  );
-                })}
+                {SEATS_OPTIONS.map((s) => (
+                  <ToggleButton
+                    key={s}
+                    active={currentSeats === s}
+                    onClick={() => onSeatsChange(s)}
+                  >
+                    {s} · {s === 4 ? 'compact' : s === 5 ? 'family' : 'multi-gen'}
+                  </ToggleButton>
+                ))}
               </div>
             </div>
 
             {/* Transmission */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-soft">Transmission</label>
+            <div className="space-y-3">
+              <p className="kicker">Transmission</p>
               <div className="flex flex-wrap gap-2">
-                {TRANSMISSION_OPTIONS.map((opt) => {
-                  const active = currentTrans === opt.value;
-                  return (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => onTransChange(opt.value)}
-                      className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                        active
-                          ? 'bg-accent text-white border-accent'
-                          : 'bg-white text-ink-soft border-black/10 hover:border-accent/50'
-                      }`}
-                    >
-                      {opt.label}
-                    </button>
-                  );
-                })}
+                {TRANSMISSION_OPTIONS.map((opt) => (
+                  <ToggleButton
+                    key={opt.value}
+                    active={currentTrans === opt.value}
+                    onClick={() => onTransChange(opt.value)}
+                  >
+                    {opt.label}
+                  </ToggleButton>
+                ))}
               </div>
             </div>
 
             {/* Safety */}
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-ink-soft">Safety floor</label>
+            <div className="space-y-3">
+              <p className="kicker">Safety floor</p>
               <div className="flex flex-wrap gap-2">
-                {SAFETY_OPTIONS.map((s) => {
-                  const active = currentSafety === s;
-                  const label = s === 5 ? '5★' : `${s}★+`;
-                  return (
-                    <button
-                      key={s}
-                      type="button"
-                      onClick={() => onSafetyChange(s)}
-                      className={`rounded-full border px-4 py-1.5 text-sm transition ${
-                        active
-                          ? 'bg-accent text-white border-accent'
-                          : 'bg-white text-ink-soft border-black/10 hover:border-accent/50'
-                      }`}
-                    >
-                      {label}
-                    </button>
-                  );
-                })}
+                {SAFETY_OPTIONS.map((s) => (
+                  <ToggleButton
+                    key={s}
+                    active={currentSafety === s}
+                    onClick={() => onSafetyChange(s)}
+                  >
+                    {s === 5 ? '5 stars' : `${s}+ stars`}
+                  </ToggleButton>
+                ))}
               </div>
             </div>
           </div>
 
           {/* Fuel — full width */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium text-ink-soft">Allowed fuels</label>
+          <div className="space-y-3">
+            <p className="kicker">Allowed fuels</p>
             <div className="flex flex-wrap gap-2">
-              {FUEL_OPTIONS.map((f) => {
-                const active = currentFuel.includes(f);
-                return (
-                  <button
-                    key={f}
-                    type="button"
-                    onClick={() => toggleFuel(f)}
-                    className={`rounded-full border px-4 py-1.5 text-sm transition capitalize ${
-                      active
-                        ? 'bg-accent text-white border-accent'
-                        : 'bg-white text-ink-soft border-black/10 hover:border-accent/50'
-                    }`}
-                  >
-                    {f}
-                  </button>
-                );
-              })}
+              {FUEL_OPTIONS.map((f) => (
+                <ToggleButton
+                  key={f}
+                  active={currentFuel.includes(f)}
+                  onClick={() => toggleFuel(f)}
+                >
+                  {f}
+                </ToggleButton>
+              ))}
             </div>
           </div>
 
-          <div className="flex items-center justify-between border-t border-black/5 pt-4">
-            <p className="text-xs text-ink-muted">
-              Changes re-rank your shortlist live.
-            </p>
+          <div className="flex items-center justify-between border-t border-rule pt-6">
+            <p className="kicker">Changes re-rank your shortlist live</p>
             <button
               type="button"
               onClick={onReset}
               disabled={!hasOverride}
-              className="rounded-full border border-black/10 bg-white px-4 py-1.5 text-sm text-ink-soft transition hover:border-accent/50 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="font-mono text-[10px] uppercase tracking-kicker px-3 py-2 border border-ink/30 text-ink-soft hover:bg-ink hover:text-paper hover:border-ink transition-all duration-300 disabled:opacity-30 disabled:cursor-not-allowed disabled:hover:bg-paper disabled:hover:text-ink-soft"
             >
               Reset to default
             </button>
