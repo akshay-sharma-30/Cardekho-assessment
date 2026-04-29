@@ -1,0 +1,150 @@
+[
+  {
+    "id": "young-family-metro",
+    "title": "New parent in the metro",
+    "tagline": "Safe, easy to park, hassle-free",
+    "emoji": "👨‍👩‍👧",
+    "description": "You just had a kid in a busy metro city and need a five-seater that ferries the family without making weekend parking a nightmare. Top safety and an automatic gearbox for stop-go traffic are non-negotiable.",
+    "preferences": {
+      "budgetMaxLakh": 12,
+      "budgetMinLakh": 8,
+      "seats": 5,
+      "fuel": ["petrol", "hybrid", "cng"],
+      "transmission": "automatic",
+      "body": ["compact-suv", "hatchback", "sedan"],
+      "boot": "medium",
+      "safetyMin": 4,
+      "fuelEfficiencyKmplMin": 16,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "Five seats with ISOFIX child-seat mounts",
+      "4-star+ Global NCAP / Bharat NCAP rating",
+      "Automatic gearbox for bumper-to-bumper traffic",
+      "Under 4m length so metro parking stays easy"
+    ]
+  },
+  {
+    "id": "first-time-tier2",
+    "title": "First-time buyer in Tier 2/3",
+    "tagline": "Cheap to run, easy to fix anywhere",
+    "emoji": "🌱",
+    "description": "You're upgrading from a two-wheeler in a smaller town. The car needs to be cheap, sip fuel, and have a service centre on every other street so a roadside breakdown isn't a disaster.",
+    "preferences": {
+      "budgetMaxLakh": 7,
+      "seats": 5,
+      "fuel": ["petrol", "cng"],
+      "transmission": "manual",
+      "body": ["hatchback"],
+      "boot": "small",
+      "safetyMin": 3,
+      "fuelEfficiencyKmplMin": 20,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "Sub ₹7L on-road, lowest cost-of-ownership",
+      "20+ kmpl real world fuel efficiency",
+      "Service network in every district town",
+      "Light clutch and easy controls for new drivers"
+    ]
+  },
+  {
+    "id": "weekend-warrior",
+    "title": "Weekend warrior",
+    "tagline": "Monday cubicle, Saturday switchback",
+    "emoji": "🏔️",
+    "description": "Weekdays you potter through traffic, but on Friday night you hit broken roads and ghats with mates. You want SUV stance, decent ground clearance and an automatic so you can sip coffee while crawling out of the city.",
+    "preferences": {
+      "budgetMaxLakh": 16,
+      "budgetMinLakh": 10,
+      "seats": 5,
+      "fuel": ["petrol", "diesel", "hybrid"],
+      "transmission": "automatic",
+      "body": ["compact-suv", "suv"],
+      "boot": "medium",
+      "safetyMin": 4,
+      "fuelEfficiencyKmplMin": 14
+    },
+    "highlights": [
+      "200mm+ ground clearance for broken roads",
+      "Automatic gearbox for ghat sections",
+      "Larger boot for trekking gear",
+      "Confident high-speed manners"
+    ]
+  },
+  {
+    "id": "highway-commuter",
+    "title": "Highway commuter",
+    "tagline": "Cruise home in comfort, every single day",
+    "emoji": "🛣️",
+    "description": "You rack up 60-80km on highway every day. You want a refined diesel or hybrid, an automatic for the daily slog, and the kind of seats that don't leave your back screaming at 9pm.",
+    "preferences": {
+      "budgetMaxLakh": 20,
+      "budgetMinLakh": 12,
+      "seats": 5,
+      "fuel": ["diesel", "hybrid"],
+      "transmission": "automatic",
+      "body": ["sedan", "suv", "muv"],
+      "boot": "large",
+      "safetyMin": 4,
+      "fuelEfficiencyKmplMin": 18,
+      "highwayCommute": true
+    },
+    "highlights": [
+      "Refined diesel or strong-hybrid powertrain",
+      "Automatic with cruise control",
+      "Low NVH at 100kmph",
+      "Long-haul comfort seats and big boot"
+    ]
+  },
+  {
+    "id": "young-pro-solo",
+    "title": "Young pro, flying solo",
+    "tagline": "Looks-first daily — sharp, slick, low maintenance",
+    "emoji": "🕶️",
+    "description": "Single, mid-twenties, working in a Tier-1 city. You don't need seven seats — you need a sharp-looking petrol automatic that screams 'I made it' in the office basement.",
+    "preferences": {
+      "budgetMaxLakh": 10,
+      "budgetMinLakh": 6,
+      "seats": 5,
+      "fuel": ["petrol", "hybrid"],
+      "transmission": "automatic",
+      "body": ["hatchback", "sedan", "compact-suv"],
+      "boot": "small",
+      "safetyMin": 3,
+      "fuelEfficiencyKmplMin": 17,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "Punchy petrol with smooth automatic",
+      "Premium-feeling cabin with connected tech",
+      "Compact enough for valet parking anywhere",
+      "Designs that turn heads at the office"
+    ]
+  },
+  {
+    "id": "premium-upgrader",
+    "title": "Premium upgrader",
+    "tagline": "Stepping up — the next car is the statement",
+    "emoji": "💎",
+    "description": "You've owned a hatchback for six years. The next car must feel like a clear upgrade — German build, 5-star safety, and an SUV or sedan that looks at home in a five-star valet line.",
+    "preferences": {
+      "budgetMaxLakh": 25,
+      "budgetMinLakh": 16,
+      "seats": 5,
+      "fuel": ["petrol", "diesel", "hybrid"],
+      "transmission": "automatic",
+      "body": ["suv", "sedan", "compact-suv"],
+      "boot": "large",
+      "safetyMin": 5,
+      "fuelEfficiencyKmplMin": 14,
+      "highwayCommute": true
+    },
+    "highlights": [
+      "5-star Global NCAP safety",
+      "Premium European or feature-loaded cabin",
+      "Powerful turbo-petrol or refined diesel automatic",
+      "Strong residual value on resale"
+    ]
+  }
+]

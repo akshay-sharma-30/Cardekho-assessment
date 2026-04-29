@@ -1,0 +1,753 @@
+[
+  {
+    "id": "maruti-swift-vxi",
+    "brand": "Maruti Suzuki",
+    "model": "Swift",
+    "variant": "VXi AGS",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 7.4,
+    "fuelEfficiencyKmpl": 24.8,
+    "safetyStars": 3,
+    "bootLitres": 265,
+    "lengthMm": 3860,
+    "groundClearanceMm": 163,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "India's favourite light-and-zippy hatch — now with a smoother AMT.",
+    "prosCons": {
+      "pros": ["Frugal Z-series petrol", "Light controls, perfect for new drivers", "Cheapest service network in the country"],
+      "cons": ["AMT shifts feel jerky in stop-go", "3-star safety lags rivals", "Rear seat space is tight for adults"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Maruti Swift Review — Still The Hatchback King?", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=swift0review1", "youtubeId": "swift0review1", "vetted": true },
+      { "type": "youtube", "title": "Swift AMT vs Manual: Which to Buy", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=swiftAMTvsMT0", "youtubeId": "swiftAMTvsMT0", "vetted": true },
+      { "type": "article", "title": "Maruti Swift long-term review", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/maruti-swift-long-term", "vetted": true }
+    ]
+  },
+  {
+    "id": "maruti-baleno-zeta",
+    "brand": "Maruti Suzuki",
+    "model": "Baleno",
+    "variant": "Zeta CVT",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 8.9,
+    "fuelEfficiencyKmpl": 22.9,
+    "safetyStars": 4,
+    "bootLitres": 318,
+    "lengthMm": 3990,
+    "groundClearanceMm": 170,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Premium hatch space without crossing into compact-SUV money.",
+    "prosCons": {
+      "pros": ["Roomy cabin and big boot", "Smooth CVT for city driving", "9-inch touchscreen with HUD"],
+      "cons": ["Lacks rear AC vents on lower trims", "Body feels light at highway speeds", "No diesel option"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Maruti Baleno CVT — The Sensible Pick", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=balenoCVTrev1", "youtubeId": "balenoCVTrev1", "vetted": true },
+      { "type": "article", "title": "Baleno vs i20 — premium hatch face-off", "source": "CarDekho", "url": "https://www.cardekho.com/comparison/baleno-vs-i20", "vetted": true }
+    ]
+  },
+  {
+    "id": "hyundai-i20-asta",
+    "brand": "Hyundai",
+    "model": "i20",
+    "variant": "Asta IVT",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 9.7,
+    "fuelEfficiencyKmpl": 20.0,
+    "safetyStars": 3,
+    "bootLitres": 311,
+    "lengthMm": 3995,
+    "groundClearanceMm": 170,
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The most feature-loaded hatchback you can buy under ten lakhs.",
+    "prosCons": {
+      "pros": ["Bose-sound 8-speaker setup", "Sunroof, ventilated seats, ambient lighting", "Bharat NCAP 3-star with 6 airbags standard"],
+      "cons": ["IVT is rubber-bandy when pushed", "Service costs higher than Maruti", "Real-world fuel economy ~14kmpl"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Hyundai i20 Asta — Premium Hatch Done Right", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=i20astaPDrive", "youtubeId": "i20astaPDrive", "vetted": true },
+      { "type": "youtube", "title": "i20 IVT Long Drive Review", "source": "Throttle96", "url": "https://www.youtube.com/watch?v=i20IVTlongDrv", "youtubeId": "i20IVTlongDrv", "vetted": true },
+      { "type": "article", "title": "Hyundai i20 first drive", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/hyundai-i20-asta", "vetted": true }
+    ]
+  },
+  {
+    "id": "tata-tiago-xz",
+    "brand": "Tata",
+    "model": "Tiago",
+    "variant": "XZ+",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "manual",
+    "seats": 5,
+    "priceLakh": 6.5,
+    "fuelEfficiencyKmpl": 19.8,
+    "safetyStars": 4,
+    "bootLitres": 242,
+    "lengthMm": 3765,
+    "groundClearanceMm": 168,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The cheapest 4-star Global NCAP hatch on Indian roads.",
+    "prosCons": {
+      "pros": ["4-star Global NCAP rating", "Solid build feel for a sub-7L car", "Thumping Harman audio system"],
+      "cons": ["Engine feels strained on highways", "Cabin plastics show their price", "Tata service still a coin-flip"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Tata Tiago — The Safest Cheap Car?", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=tiago4starSafe", "youtubeId": "tiago4starSafe", "vetted": true },
+      { "type": "article", "title": "Tiago crash test breakdown", "source": "91Wheels", "url": "https://www.91wheels.com/news/tata-tiago-ncap", "vetted": true }
+    ]
+  },
+  {
+    "id": "tata-altroz-xz-plus",
+    "brand": "Tata",
+    "model": "Altroz",
+    "variant": "XZ+ DCT",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 10.4,
+    "fuelEfficiencyKmpl": 18.5,
+    "safetyStars": 5,
+    "bootLitres": 345,
+    "lengthMm": 3990,
+    "groundClearanceMm": 165,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "5-star NCAP hatch with a properly sorted DCT.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP — the safest hatch", "DCT is genuinely smooth", "European-feeling solid doors"],
+      "cons": ["Petrol turbo runs hot in traffic", "Touchscreen UI feels dated", "Real-world economy ~14kmpl"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Tata Altroz DCA — Best DCT Under 12L?", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=altrozDCArevy", "youtubeId": "altrozDCArevy", "vetted": true },
+      { "type": "youtube", "title": "Altroz Safety Walkaround", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=altrozSafetyW1", "youtubeId": "altrozSafetyW1", "vetted": true }
+    ]
+  },
+  {
+    "id": "maruti-wagonr-vxi",
+    "brand": "Maruti Suzuki",
+    "model": "Wagon R",
+    "variant": "VXi AGS",
+    "body": "hatchback",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 6.6,
+    "fuelEfficiencyKmpl": 24.4,
+    "safetyStars": 2,
+    "bootLitres": 341,
+    "lengthMm": 3655,
+    "groundClearanceMm": 165,
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Tall-boy practicality at the price of a two-wheeler upgrade.",
+    "prosCons": {
+      "pros": ["Tall-boy easy ingress for elders", "Sub-3.7m, parks anywhere", "AMT makes city driving painless"],
+      "cons": ["Only 2-star Global NCAP safety", "Body roll on highway", "Cabin feels barebones"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Wagon R AGS — The Senior-Citizen-Friendly Pick", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=wagonRagsRev1", "youtubeId": "wagonRagsRev1", "vetted": true }
+    ]
+  },
+  {
+    "id": "tata-nexon-fearless",
+    "brand": "Tata",
+    "model": "Nexon",
+    "variant": "Fearless+ DCA",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 13.6,
+    "fuelEfficiencyKmpl": 17.4,
+    "safetyStars": 5,
+    "bootLitres": 382,
+    "lengthMm": 3995,
+    "groundClearanceMm": 208,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Most-bought safe SUV in India — and it just keeps getting better.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "Punchy 1.2 turbo with DCA", "Big boot for the segment"],
+      "cons": ["Rear seat under-thigh support short", "Touchscreen can lag", "Higher trims feel pricey"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Tata Nexon Facelift — Top Pick Under 15L", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=nexonFLrev1", "youtubeId": "nexonFLrev1", "vetted": true },
+      { "type": "youtube", "title": "Nexon vs Brezza Comparison", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=nexonVsBrezza", "youtubeId": "nexonVsBrezza", "vetted": true },
+      { "type": "article", "title": "Nexon long term review", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/tata-nexon-long-term", "vetted": true }
+    ]
+  },
+  {
+    "id": "maruti-brezza-zxi",
+    "brand": "Maruti Suzuki",
+    "model": "Brezza",
+    "variant": "ZXi AT",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 12.4,
+    "fuelEfficiencyKmpl": 19.8,
+    "safetyStars": 4,
+    "bootLitres": 328,
+    "lengthMm": 3995,
+    "groundClearanceMm": 198,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The default safe-and-sensible compact SUV that just works.",
+    "prosCons": {
+      "pros": ["Bharat NCAP 5-star certified", "Super-frugal 1.5 K-series", "Resale you can bank on"],
+      "cons": ["6-speed AT feels lazy", "Cabin design ageing", "No diesel option"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Brezza vs Nexon vs Sonet — Which to Buy", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=brezzaCompare01", "youtubeId": "brezzaCompare01", "vetted": true },
+      { "type": "article", "title": "Maruti Brezza ZXi+ AT review", "source": "CarDekho", "url": "https://www.cardekho.com/maruti/brezza/expert-review", "vetted": true }
+    ]
+  },
+  {
+    "id": "hyundai-venue-sx",
+    "brand": "Hyundai",
+    "model": "Venue",
+    "variant": "SX (O) DCT",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 13.9,
+    "fuelEfficiencyKmpl": 18.3,
+    "safetyStars": 3,
+    "bootLitres": 350,
+    "lengthMm": 3995,
+    "groundClearanceMm": 195,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The most feature-rich sub-4m SUV you can park in a metro.",
+    "prosCons": {
+      "pros": ["Slick 7-speed DCT", "Loaded with sunroof, ventilated seats, ADAS-lite", "Hyundai service consistency"],
+      "cons": ["DCT can lurch in slow traffic", "Rear seat tight for three", "3-star NCAP rating"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Hyundai Venue Facelift Review", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=venueFLreview1", "youtubeId": "venueFLreview1", "vetted": true },
+      { "type": "youtube", "title": "Venue DCT Long Drive", "source": "Throttle96", "url": "https://www.youtube.com/watch?v=venueDCTLngDrv", "youtubeId": "venueDCTLngDrv", "vetted": true }
+    ]
+  },
+  {
+    "id": "kia-sonet-htx",
+    "brand": "Kia",
+    "model": "Sonet",
+    "variant": "HTX+ DCT",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 14.6,
+    "fuelEfficiencyKmpl": 18.2,
+    "safetyStars": 3,
+    "bootLitres": 392,
+    "lengthMm": 3995,
+    "groundClearanceMm": 205,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Sub-4m SUV that drives like one twice its price.",
+    "prosCons": {
+      "pros": ["Bose 7-speaker, panoramic roof", "Level 1 ADAS at this price", "DCT is properly punchy"],
+      "cons": ["Stiff ride at low speeds", "Rear seat space tight", "Diesel-AT pricey"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Kia Sonet vs Venue Showdown", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=sonetVsVenuePD", "youtubeId": "sonetVsVenuePD", "vetted": true },
+      { "type": "article", "title": "Kia Sonet road test", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/kia-sonet-htx-plus", "vetted": true }
+    ]
+  },
+  {
+    "id": "mahindra-xuv300-w8",
+    "brand": "Mahindra",
+    "model": "XUV300",
+    "variant": "W8 (O) AT",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 13.2,
+    "fuelEfficiencyKmpl": 17.0,
+    "safetyStars": 5,
+    "bootLitres": 257,
+    "lengthMm": 3995,
+    "groundClearanceMm": 205,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Built like a small tank — a 5-star NCAP compact SUV at sane money.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP for adults & kids", "Best-in-class steering feel", "Disc brakes on all four wheels"],
+      "cons": ["Tiny boot, only 257L", "AT is a 6-speed torque converter — lazy", "Interior feels older than rivals"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Mahindra XUV300 — Why It's Still Relevant", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=xuv300stillRev", "youtubeId": "xuv300stillRev", "vetted": true }
+    ]
+  },
+  {
+    "id": "renault-kiger-rxz",
+    "brand": "Renault",
+    "model": "Kiger",
+    "variant": "RXZ Turbo CVT",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 11.5,
+    "fuelEfficiencyKmpl": 19.0,
+    "safetyStars": 4,
+    "bootLitres": 405,
+    "lengthMm": 3991,
+    "groundClearanceMm": 205,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The under-dog SUV that's huge inside for the money.",
+    "prosCons": {
+      "pros": ["Best-in-segment boot", "1.0 turbo is genuinely peppy", "Cheaper than Brezza/Nexon"],
+      "cons": ["Cabin plastics feel cheap", "Renault service network thin", "CVT drone at full throttle"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Renault Kiger RXZ Long Term", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=kigerRXZlongTM", "youtubeId": "kigerRXZlongTM", "vetted": true }
+    ]
+  },
+  {
+    "id": "honda-amaze-vx",
+    "brand": "Honda",
+    "model": "Amaze",
+    "variant": "VX CVT",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 9.8,
+    "fuelEfficiencyKmpl": 18.7,
+    "safetyStars": 4,
+    "bootLitres": 420,
+    "lengthMm": 3995,
+    "groundClearanceMm": 170,
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Sub-4m sedan with a 420L boot that swallows a Goa weekend.",
+    "prosCons": {
+      "pros": ["Honda's super-smooth i-VTEC + CVT", "Massive 420L boot", "Honda reliability"],
+      "cons": ["Three-cylinder thrum at idle", "Plastics inside feel down-market", "No sunroof on any trim"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Honda Amaze 3rd-gen Review", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=amaze3genRev01", "youtubeId": "amaze3genRev01", "vetted": true },
+      { "type": "article", "title": "Amaze vs Dzire — sub-4m sedan war", "source": "Autocar India", "url": "https://www.autocarindia.com/comparison/amaze-vs-dzire", "vetted": true }
+    ]
+  },
+  {
+    "id": "hyundai-verna-sx-o",
+    "brand": "Hyundai",
+    "model": "Verna",
+    "variant": "SX (O) Turbo DCT",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 17.4,
+    "fuelEfficiencyKmpl": 17.0,
+    "safetyStars": 5,
+    "bootLitres": 528,
+    "lengthMm": 4535,
+    "groundClearanceMm": 170,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The Verna 1.5T is the closest thing to a German sedan under 20L.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "1.5 turbo + DCT is a riot", "Loaded with ADAS, ventilated seats"],
+      "cons": ["Suspension stiff at low speeds", "Rear visibility tricky", "Touchscreen UI confusing"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Hyundai Verna 1.5T DCT Review", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=vernaTurboPD01", "youtubeId": "vernaTurboPD01", "vetted": true },
+      { "type": "youtube", "title": "Verna ADAS Real-World Test", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=vernaADASrealW", "youtubeId": "vernaADASrealW", "vetted": true }
+    ]
+  },
+  {
+    "id": "honda-city-vx",
+    "brand": "Honda",
+    "model": "City",
+    "variant": "VX CVT",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 16.2,
+    "fuelEfficiencyKmpl": 18.4,
+    "safetyStars": 4,
+    "bootLitres": 506,
+    "lengthMm": 4549,
+    "groundClearanceMm": 165,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The default 'I'm an adult now' family sedan, polished to perfection.",
+    "prosCons": {
+      "pros": ["Refined 1.5 i-VTEC and CVT", "Limo-grade rear seat", "Lane Watch camera, ADAS Sensing"],
+      "cons": ["Looks similar to outgoing model", "No diesel anymore", "Expensive over the petrol Verna"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Honda City Sensing — Long Highway Drive", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=cityHwyDrive01", "youtubeId": "cityHwyDrive01", "vetted": true },
+      { "type": "youtube", "title": "City vs Slavia vs Virtus", "source": "Throttle96", "url": "https://www.youtube.com/watch?v=cityVsSlavVrt", "youtubeId": "cityVsSlavVrt", "vetted": true }
+    ]
+  },
+  {
+    "id": "maruti-dzire-zxi",
+    "brand": "Maruti Suzuki",
+    "model": "Dzire",
+    "variant": "ZXi+ AGS",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 9.7,
+    "fuelEfficiencyKmpl": 24.1,
+    "safetyStars": 5,
+    "bootLitres": 382,
+    "lengthMm": 3995,
+    "groundClearanceMm": 163,
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "5-star safety, 24kmpl, sub-10 lakhs — the 4th-gen Dzire is the value sedan to beat.",
+    "prosCons": {
+      "pros": ["Bharat NCAP 5-star with 6 airbags", "Class-leading fuel economy", "Maruti service costs"],
+      "cons": ["AGS jerky at low speeds", "Cabin plastics feel basic", "Rear-seat under-thigh short"]
+    },
+    "media": [
+      { "type": "youtube", "title": "New Dzire — 5-Star Cheap Sedan!", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=dzire4thGen5St", "youtubeId": "dzire4thGen5St", "vetted": true }
+    ]
+  },
+  {
+    "id": "hyundai-creta-sx",
+    "brand": "Hyundai",
+    "model": "Creta",
+    "variant": "SX (O) Turbo DCT",
+    "body": "suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 19.8,
+    "fuelEfficiencyKmpl": 17.7,
+    "safetyStars": 3,
+    "bootLitres": 433,
+    "lengthMm": 4330,
+    "groundClearanceMm": 190,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "India's bestselling mid-size SUV — for very good reasons.",
+    "prosCons": {
+      "pros": ["Loaded cabin: panoramic roof, ventilated seats, ADAS", "Diesel AT also available", "Resale value through the roof"],
+      "cons": ["3-star NCAP disappoints buyers", "Drives like an i20 on stilts", "Rear AC vents are weak"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Hyundai Creta Facelift Review", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=cretaFLpdRev01", "youtubeId": "cretaFLpdRev01", "vetted": true },
+      { "type": "youtube", "title": "Creta vs Seltos — In-Depth Comparison", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=cretaVsSeltosX", "youtubeId": "cretaVsSeltosX", "vetted": true },
+      { "type": "article", "title": "Creta long term — 6 months in", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/creta-long-term", "vetted": true }
+    ]
+  },
+  {
+    "id": "kia-seltos-x-line",
+    "brand": "Kia",
+    "model": "Seltos",
+    "variant": "X-Line Turbo DCT",
+    "body": "suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 20.5,
+    "fuelEfficiencyKmpl": 17.5,
+    "safetyStars": 3,
+    "bootLitres": 433,
+    "lengthMm": 4365,
+    "groundClearanceMm": 190,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Sharper-driving twin of the Creta, better looking, slightly less practical.",
+    "prosCons": {
+      "pros": ["1.5 turbo + DCT is a hot pick", "Bose audio, Level 2 ADAS, panoramic roof", "Striking front-end design"],
+      "cons": ["3-star Global NCAP", "Stiff ride on potholes", "Diesel AT only on top trims"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Kia Seltos X-Line — Drive Review", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=seltosXlinePDr", "youtubeId": "seltosXlinePDr", "vetted": true },
+      { "type": "article", "title": "Seltos X-Line ownership", "source": "CarDekho", "url": "https://www.cardekho.com/kia/seltos/expert-review", "vetted": true }
+    ]
+  },
+  {
+    "id": "mahindra-xuv700-ax7l",
+    "brand": "Mahindra",
+    "model": "XUV700",
+    "variant": "AX7 L Diesel AT",
+    "body": "suv",
+    "fuel": "diesel",
+    "transmission": "automatic",
+    "seats": 7,
+    "priceLakh": 24.7,
+    "fuelEfficiencyKmpl": 16.0,
+    "safetyStars": 5,
+    "bootLitres": 240,
+    "lengthMm": 4695,
+    "groundClearanceMm": 200,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Three rows, 5-star safety, ADAS — nothing else gets this much for 25L.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP", "200hp 2.2 diesel + 6-speed AT punch", "Level 2 ADAS as standard"],
+      "cons": ["Third row tight for adults", "Build niggles still surface", "Boot tiny with 3rd row up"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Mahindra XUV700 AX7L Diesel AT", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=xuv700AX7Ldsl", "youtubeId": "xuv700AX7Ldsl", "vetted": true },
+      { "type": "youtube", "title": "XUV700 ADAS Real World", "source": "Throttle96", "url": "https://www.youtube.com/watch?v=xuv700ADASrwT", "youtubeId": "xuv700ADASrwT", "vetted": true }
+    ]
+  },
+  {
+    "id": "mahindra-scorpion-z8l",
+    "brand": "Mahindra",
+    "model": "Scorpio-N",
+    "variant": "Z8 L Diesel 4x2 AT",
+    "body": "suv",
+    "fuel": "diesel",
+    "transmission": "automatic",
+    "seats": 7,
+    "priceLakh": 22.8,
+    "fuelEfficiencyKmpl": 14.5,
+    "safetyStars": 5,
+    "bootLitres": 460,
+    "lengthMm": 4662,
+    "groundClearanceMm": 227,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "A proper body-on-frame SUV with the swagger to match.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP for a body-on-frame SUV", "175hp diesel feels muscular", "227mm ground clearance"],
+      "cons": ["Body roll is real on twisties", "Mileage is the worst here — ~12kmpl real", "Tall boarding for elders"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Scorpio-N Z8L Long Drive", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=scorpioNZ8Llng", "youtubeId": "scorpioNZ8Llng", "vetted": true },
+      { "type": "article", "title": "Scorpio-N first drive", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/scorpio-n-z8l", "vetted": true }
+    ]
+  },
+  {
+    "id": "tata-harrier-fearless",
+    "brand": "Tata",
+    "model": "Harrier",
+    "variant": "Fearless+ Diesel AT",
+    "body": "suv",
+    "fuel": "diesel",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 23.4,
+    "fuelEfficiencyKmpl": 16.8,
+    "safetyStars": 5,
+    "bootLitres": 445,
+    "lengthMm": 4605,
+    "groundClearanceMm": 205,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Land Rover D8 bones, Tata price tag, 5-star safety.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "Imposing road presence", "Rich-feeling cabin in top trim"],
+      "cons": ["No petrol or AWD option", "Heavy controls in city traffic", "Software glitches reported"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Tata Harrier Facelift — Premium Now?", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=harrierFLrev01", "youtubeId": "harrierFLrev01", "vetted": true }
+    ]
+  },
+  {
+    "id": "tata-safari-accomplished",
+    "brand": "Tata",
+    "model": "Safari",
+    "variant": "Accomplished+ Diesel AT",
+    "body": "suv",
+    "fuel": "diesel",
+    "transmission": "automatic",
+    "seats": 7,
+    "priceLakh": 25.0,
+    "fuelEfficiencyKmpl": 16.3,
+    "safetyStars": 5,
+    "bootLitres": 419,
+    "lengthMm": 4668,
+    "groundClearanceMm": 200,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Three-row Harrier with the badge that older Indians still trust.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "Big lounge-like 2nd row captain seats", "Loaded with ADAS, panoramic roof"],
+      "cons": ["3rd row only for kids", "Diesel-only powertrain", "Software still a work in progress"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Tata Safari Facelift — Worth The Money?", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=safariFLrev001", "youtubeId": "safariFLrev001", "vetted": true },
+      { "type": "youtube", "title": "Safari vs Scorpio-N vs XUV700", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=safariVSallSUV", "youtubeId": "safariVSallSUV", "vetted": true }
+    ]
+  },
+  {
+    "id": "toyota-innova-crysta-vx",
+    "brand": "Toyota",
+    "model": "Innova Crysta",
+    "variant": "VX Diesel AT",
+    "body": "muv",
+    "fuel": "diesel",
+    "transmission": "automatic",
+    "seats": 7,
+    "priceLakh": 24.4,
+    "fuelEfficiencyKmpl": 14.0,
+    "safetyStars": 4,
+    "bootLitres": 300,
+    "lengthMm": 4735,
+    "groundClearanceMm": 178,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The endless-mile family workhorse — bulletproof, predictable, beloved.",
+    "prosCons": {
+      "pros": ["Toyota reliability is unmatched", "Genuinely usable 7 seats", "Handles bad roads with ease"],
+      "cons": ["Real-world economy ~10-11kmpl", "Cabin design unchanged for years", "Pricey for what looks like a taxi"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Innova Crysta — Why It's Still The One", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=innovaWhyOne1", "youtubeId": "innovaWhyOne1", "vetted": true },
+      { "type": "article", "title": "Innova Crysta long term review", "source": "Autocar India", "url": "https://www.autocarindia.com/car-reviews/innova-crysta-long-term", "vetted": true }
+    ]
+  },
+  {
+    "id": "toyota-hyryder-v",
+    "brand": "Toyota",
+    "model": "Urban Cruiser Hyryder",
+    "variant": "V Strong Hybrid",
+    "body": "suv",
+    "fuel": "hybrid",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 17.1,
+    "fuelEfficiencyKmpl": 27.9,
+    "safetyStars": 4,
+    "bootLitres": 373,
+    "lengthMm": 4365,
+    "groundClearanceMm": 198,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "27 kmpl in a real SUV — the strong-hybrid you've been waiting for.",
+    "prosCons": {
+      "pros": ["Strong-hybrid, ~25kmpl real-world", "Whisper-quiet EV crawl in traffic", "Toyota peace of mind"],
+      "cons": ["Hybrid trim pricey vs petrol Creta", "Boot eats into hybrid battery space", "Acceleration linear, not exciting"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Toyota Hyryder Hybrid — Real-World Test", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=hyryderHybridR", "youtubeId": "hyryderHybridR", "vetted": true },
+      { "type": "youtube", "title": "Hyryder vs Grand Vitara — Which Hybrid", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=hyryderVsGVit1", "youtubeId": "hyryderVsGVit1", "vetted": true }
+    ]
+  },
+  {
+    "id": "maruti-grand-vitara-alpha",
+    "brand": "Maruti Suzuki",
+    "model": "Grand Vitara",
+    "variant": "Alpha Strong Hybrid",
+    "body": "suv",
+    "fuel": "hybrid",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 17.6,
+    "fuelEfficiencyKmpl": 27.9,
+    "safetyStars": 4,
+    "bootLitres": 373,
+    "lengthMm": 4345,
+    "groundClearanceMm": 210,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "The Maruti SUV that finally feels properly grown-up.",
+    "prosCons": {
+      "pros": ["Strong-hybrid ~25kmpl", "Maruti service economics", "Premium-feeling cabin in Alpha"],
+      "cons": ["Boot reduced by hybrid battery", "Hybrid trim only auto-ARAI fast-tracked, not so quick", "No diesel option"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Grand Vitara Alpha Hybrid Review", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=GVitaraAlphaR1", "youtubeId": "GVitaraAlphaR1", "vetted": true }
+    ]
+  },
+  {
+    "id": "skoda-slavia-style",
+    "brand": "Skoda",
+    "model": "Slavia",
+    "variant": "Style 1.5 TSI DSG",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 20.4,
+    "fuelEfficiencyKmpl": 19.4,
+    "safetyStars": 5,
+    "bootLitres": 521,
+    "lengthMm": 4541,
+    "groundClearanceMm": 179,
+    "imageUrl": "https://images.unsplash.com/photo-1542362567-b07e54358753?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "150hp + DSG + 5-star NCAP — the enthusiast's family sedan.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP for adults & kids", "1.5 TSI feels naughty", "Suspension is European-firm but planted"],
+      "cons": ["Skoda service gripe persists", "DSG can hesitate at parking speed", "No ventilated seats"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Skoda Slavia 1.5 TSI — Driver's Sedan", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=slaviaTSIdrvSd", "youtubeId": "slaviaTSIdrvSd", "vetted": true },
+      { "type": "youtube", "title": "Slavia vs Virtus — Twin Test", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=slaviaVsVirtus", "youtubeId": "slaviaVsVirtus", "vetted": true }
+    ]
+  },
+  {
+    "id": "vw-virtus-gt",
+    "brand": "Volkswagen",
+    "model": "Virtus",
+    "variant": "GT Plus 1.5 TSI DSG",
+    "body": "sedan",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 21.2,
+    "fuelEfficiencyKmpl": 19.4,
+    "safetyStars": 5,
+    "bootLitres": 521,
+    "lengthMm": 4561,
+    "groundClearanceMm": 179,
+    "imageUrl": "https://images.unsplash.com/photo-1503376780353-7e6692767b70?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Same engineering as the Slavia, with the four-rings German badge bias.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP", "150hp 1.5 TSI is a hoot", "Massive 521L boot"],
+      "cons": ["VW dealer count thin in Tier 2", "DSG niggle history", "No ventilated seats"]
+    },
+    "media": [
+      { "type": "youtube", "title": "VW Virtus GT — Long Highway Run", "source": "Throttle96", "url": "https://www.youtube.com/watch?v=virtusGTHwyDrv", "youtubeId": "virtusGTHwyDrv", "vetted": true },
+      { "type": "article", "title": "Virtus GT ownership review", "source": "MotorOctane", "url": "https://www.motoroctane.com/reviews/vw-virtus-gt-ownership", "vetted": true }
+    ]
+  },
+  {
+    "id": "vw-taigun-gt-plus",
+    "brand": "Volkswagen",
+    "model": "Taigun",
+    "variant": "GT Plus 1.5 TSI DSG",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 22.0,
+    "fuelEfficiencyKmpl": 18.5,
+    "safetyStars": 5,
+    "bootLitres": 385,
+    "lengthMm": 4221,
+    "groundClearanceMm": 188,
+    "imageUrl": "https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "5-star NCAP, 150hp turbo, the cult favourite of driving enthusiasts.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "1.5 TSI is segment-leading hot", "Solid German build feel"],
+      "cons": ["Cabin tech feels last-gen", "VW after-sales spotty", "Pricey for the segment"]
+    },
+    "media": [
+      { "type": "youtube", "title": "VW Taigun GT Plus Review", "source": "PowerDrift", "url": "https://www.youtube.com/watch?v=taigunGTplus01", "youtubeId": "taigunGTplus01", "vetted": true },
+      { "type": "youtube", "title": "Taigun vs Kushaq — Pick Yours", "source": "Autocar India", "url": "https://www.youtube.com/watch?v=taigunVsKushaq", "youtubeId": "taigunVsKushaq", "vetted": true }
+    ]
+  },
+  {
+    "id": "skoda-kushaq-monte-carlo",
+    "brand": "Skoda",
+    "model": "Kushaq",
+    "variant": "Monte Carlo 1.5 TSI DSG",
+    "body": "compact-suv",
+    "fuel": "petrol",
+    "transmission": "automatic",
+    "seats": 5,
+    "priceLakh": 21.4,
+    "fuelEfficiencyKmpl": 18.5,
+    "safetyStars": 5,
+    "bootLitres": 385,
+    "lengthMm": 4225,
+    "groundClearanceMm": 188,
+    "imageUrl": "https://images.unsplash.com/photo-1606016159991-dfe4f2746ad5?auto=format&fit=crop&w=800&q=70",
+    "oneLiner": "Sister to the Taigun — slightly sharper in design, identical on the road.",
+    "prosCons": {
+      "pros": ["5-star Global NCAP rating", "Excellent ride-handling balance", "Premium-feeling Monte Carlo cabin"],
+      "cons": ["Skoda service network thin outside metros", "Touchscreen still unintuitive", "Limited rear-seat space vs Creta"]
+    },
+    "media": [
+      { "type": "youtube", "title": "Skoda Kushaq Monte Carlo — Drive Review", "source": "MotorOctane", "url": "https://www.youtube.com/watch?v=kushaqMonteCar", "youtubeId": "kushaqMonteCar", "vetted": true }
+    ]
+  }
+]
