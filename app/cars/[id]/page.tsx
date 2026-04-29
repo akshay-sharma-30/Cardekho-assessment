@@ -34,19 +34,21 @@ const BODY_LABEL: Record<string, string> = {
   'compact-suv': 'Compact SUV',
 };
 
-function SpecBadge({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-white border border-black/5 px-3 py-1 text-xs font-medium text-ink-soft shadow-sm">
-      {children}
-    </span>
-  );
+// Stable two-digit dossier number derived from the car id — purely cosmetic,
+// gives the masthead a sense of being "issue NN" without needing real numbering.
+function dossierNo(id: string): string {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (h * 31 + id.charCodeAt(i)) >>> 0;
+  }
+  return String((h % 89) + 10).padStart(2, '0');
 }
 
-function SpecRow({ label, value }: { label: string; value: string | number }) {
+function SpecCell({ kicker, value }: { kicker: string; value: string }) {
   return (
-    <div className="flex items-center justify-between py-3 border-b border-black/5 last:border-b-0">
-      <dt className="text-sm text-ink-muted">{label}</dt>
-      <dd className="text-sm font-medium text-ink tabular-nums">{value}</dd>
+    <div className="bg-paper py-5 px-5 md:px-6">
+      <p className="kicker mb-2">§ {kicker}</p>
+      <p className="font-mono text-base md:text-lg tabular-nums text-ink">{value}</p>
     </div>
   );
 }
@@ -60,156 +62,192 @@ export default async function Page({ params, searchParams }: PageProps) {
   const backHref = persona ? `/personas/${persona.id}` : '/';
   const backLabel = persona ? persona.title : 'all personas';
 
+  const dossier = dossierNo(car.id);
+
   return (
-    <div className="space-y-10">
+    <div className="space-y-20">
       <RecordView carId={car.id} personaId={persona?.id ?? null} />
-      <Link
-        href={backHref}
-        className="inline-flex items-center text-sm text-ink-muted hover:text-ink transition"
-      >
-        <span aria-hidden="true" className="mr-1">←</span>
-        Back to {backLabel}
-      </Link>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_1fr] gap-8 lg:gap-10">
-        {/* LEFT column */}
-        <div className="space-y-6">
-          <div className="relative w-full aspect-[16/10] rounded-3xl overflow-hidden bg-neutral-100">
-            <Image
-              src={car.imageUrl}
-              alt={`${car.brand} ${car.model} ${car.variant}`}
-              fill
-              priority
-              sizes="(min-width: 1024px) 60vw, 100vw"
-              className="object-cover"
-            />
-          </div>
+      {/* ── Back link (kicker style) ─────────────────────────────────────── */}
+      <div>
+        <Link
+          href={backHref}
+          className="kicker inline-flex items-center gap-2 hover:text-ink transition-colors duration-300"
+        >
+          <span aria-hidden="true">←</span>
+          {backLabel}
+        </Link>
+      </div>
 
-          <div>
-            <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-ink">
-              {car.brand} {car.model}{' '}
-              <span className="text-ink-muted font-medium">{car.variant}</span>
-            </h1>
-            <div className="mt-3 flex items-center justify-between gap-4 flex-wrap">
-              <p className="flex items-baseline gap-2">
-                <span className="text-2xl font-semibold text-ink tabular-nums">
-                  ₹{car.priceLakh.toFixed(1)} L
-                </span>
-                <span className="text-sm text-ink-muted">ex-showroom</span>
-              </p>
+      {/* ── Editorial masthead ───────────────────────────────────────────── */}
+      <header className="grid grid-cols-12 gap-x-6 items-start">
+        <div className="col-span-12 md:col-span-2 mb-4 md:mb-0">
+          <p className="kicker">§ Dossier № {dossier}</p>
+        </div>
+        <div className="col-span-12 md:col-span-10">
+          <p className="kicker mb-3">{car.brand}</p>
+          <h1 className="display text-[44px] md:text-[60px] leading-[0.98] tracking-tight text-ink">
+            {car.model}
+          </h1>
+          <p className="mt-3 font-display italic text-xl md:text-2xl text-ink-muted leading-snug">
+            {car.variant}
+          </p>
+          <div className="mt-7 flex items-baseline gap-4 flex-wrap">
+            <span className="font-mono text-3xl md:text-4xl tabular-nums text-ink tracking-tight">
+              ₹{car.priceLakh.toFixed(1)} L
+            </span>
+            <span className="kicker">ex-showroom</span>
+            <div className="ml-auto">
               <CompareButton carId={car.id} variant="inline" />
             </div>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <SpecBadge>{BODY_LABEL[car.body] ?? car.body}</SpecBadge>
-            <SpecBadge>{FUEL_LABEL[car.fuel] ?? car.fuel}</SpecBadge>
-            <SpecBadge>{TRANSMISSION_LABEL[car.transmission] ?? car.transmission}</SpecBadge>
-            <SpecBadge>{car.seats} seats</SpecBadge>
-          </div>
-
-          <blockquote className="border-l-2 border-accent pl-4 italic text-ink-soft text-base sm:text-lg leading-relaxed">
-            “{car.oneLiner}”
-          </blockquote>
         </div>
+      </header>
 
-        {/* RIGHT column */}
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
-              Key spec
-            </h2>
-            <dl className="mt-3">
-              <SpecRow label="Fuel efficiency" value={`${car.fuelEfficiencyKmpl} kmpl`} />
-              <SpecRow
-                label="Safety"
-                value={`${car.safetyStars}${car.safetyStars === 1 ? ' star' : ' stars'}`}
-              />
-              <SpecRow label="Boot" value={`${car.bootLitres} L`} />
-              <SpecRow label="Length" value={`${car.lengthMm} mm`} />
-              <SpecRow label="Ground clearance" value={`${car.groundClearanceMm} mm`} />
-            </dl>
-          </div>
-
-          <div className="rounded-2xl border border-black/5 bg-white p-5 shadow-sm">
-            <h2 className="text-sm font-semibold uppercase tracking-wide text-ink-muted">
-              Pros & cons
-            </h2>
-            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                  Pros
-                </h3>
-                <ul className="mt-2 space-y-1.5">
-                  {car.prosCons.pros.map((p) => (
-                    <li key={p} className="flex items-start gap-2 text-sm text-ink-soft">
-                      <span className="mt-0.5 text-emerald-600 font-bold" aria-hidden="true">
-                        ✓
-                      </span>
-                      <span>{p}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wide text-red-700">
-                  Cons
-                </h3>
-                <ul className="mt-2 space-y-1.5">
-                  {car.prosCons.cons.map((c) => (
-                    <li key={c} className="flex items-start gap-2 text-sm text-ink-soft">
-                      <span className="mt-0.5 text-red-600 font-bold" aria-hidden="true">
-                        ✗
-                      </span>
-                      <span>{c}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </div>
-          </div>
-
-          {persona && <WhyThisCar persona={persona} car={car} />}
-        </div>
+      {/* ── Hero image — full bleed under masthead ───────────────────────── */}
+      <div className="relative w-full aspect-[16/9] md:aspect-[21/9] overflow-hidden bg-paper-deep/40">
+        <Image
+          src={car.imageUrl}
+          alt={`${car.brand} ${car.model} ${car.variant}`}
+          fill
+          priority
+          sizes="100vw"
+          className="object-cover"
+        />
       </div>
 
-      {/* What reviewers say */}
-      <MediaEmbed media={car.media} />
+      {/* ── Editorial pull-quote ─────────────────────────────────────────── */}
+      <section className="grid grid-cols-12 gap-x-6">
+        <div className="col-span-12 md:col-span-2 mb-3 md:mb-0">
+          <p className="kicker">§ The pitch</p>
+        </div>
+        <div className="col-span-12 md:col-span-9">
+          <blockquote className="font-display italic text-2xl md:text-3xl text-ink-soft leading-snug max-w-3xl">
+            &ldquo;{car.oneLiner}&rdquo;
+          </blockquote>
+        </div>
+      </section>
 
-      {/* CTA card */}
-      <section
-        id="book"
-        className="rounded-3xl bg-gradient-to-br from-ink to-ink-soft text-white p-6 sm:p-10 shadow-xl"
-      >
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-8 items-center">
-          <div>
-            <span className="inline-flex items-center rounded-full bg-white/10 px-3 py-1 text-xs font-medium uppercase tracking-wide text-white/80">
-              Free · No obligation
-            </span>
-            <h2 className="mt-3 text-2xl sm:text-3xl font-semibold tracking-tight">
-              Interested? Book a free test drive
-            </h2>
-            <p className="mt-2 text-sm text-white/70">
-              Dealer will call within 24 hours. Drive the {car.brand} {car.model} on your own
-              streets — no showroom pressure.
-            </p>
-            <ul className="mt-5 space-y-2 text-sm text-white/80">
-              <li className="flex items-center gap-2">
-                <span className="text-accent" aria-hidden="true">✓</span>
-                Curated dealers, vetted by CarFit
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-accent" aria-hidden="true">✓</span>
-                One callback, then no spam
-              </li>
-              <li className="flex items-center gap-2">
-                <span className="text-accent" aria-hidden="true">✓</span>
-                Cancel any time
-              </li>
-            </ul>
+      <div className="rule" />
+
+      {/* ── Spec table ───────────────────────────────────────────────────── */}
+      <section>
+        <div className="grid grid-cols-12 gap-x-6 mb-8">
+          <div className="col-span-12 md:col-span-2">
+            <p className="kicker">§ Specs</p>
           </div>
+          <div className="col-span-12 md:col-span-9">
+            <h2 className="display text-3xl md:text-4xl leading-tight">
+              The numbers,{' '}
+              <span className="display-italic text-accent">on paper</span>.
+            </h2>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-px bg-rule border border-rule">
+          <SpecCell kicker="Body" value={BODY_LABEL[car.body] ?? car.body} />
+          <SpecCell kicker="Fuel" value={FUEL_LABEL[car.fuel] ?? car.fuel} />
+          <SpecCell
+            kicker="Transmission"
+            value={TRANSMISSION_LABEL[car.transmission] ?? car.transmission}
+          />
+          <SpecCell kicker="Seats" value={`${car.seats}`} />
+          <SpecCell kicker="Boot" value={`${car.bootLitres} L`} />
+          <SpecCell kicker="FE" value={`${car.fuelEfficiencyKmpl} kmpl`} />
+          <SpecCell kicker="Safety" value={`${car.safetyStars}★`} />
+          <SpecCell kicker="Length" value={`${car.lengthMm} mm`} />
+          <SpecCell kicker="Ground" value={`${car.groundClearanceMm} mm`} />
+        </div>
+      </section>
 
-          <div className="text-ink">
+      {/* ── Pros / cons ──────────────────────────────────────────────────── */}
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-px bg-rule border-y border-rule">
+        <div className="bg-paper p-6 md:p-8">
+          <p className="kicker text-forest mb-4">§ The case for</p>
+          <ul className="space-y-3">
+            {car.prosCons.pros.map((p) => (
+              <li key={p} className="flex items-start gap-3">
+                <span
+                  className="font-mono text-[10px] uppercase tracking-kicker text-forest mt-[6px] shrink-0"
+                  aria-hidden="true"
+                >
+                  ✓
+                </span>
+                <span className="text-base text-ink-soft leading-relaxed">{p}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="bg-paper p-6 md:p-8">
+          <p className="kicker text-accent-deep mb-4">§ The case against</p>
+          <ul className="space-y-3">
+            {car.prosCons.cons.map((c) => (
+              <li key={c} className="flex items-start gap-3">
+                <span
+                  className="font-mono text-[10px] uppercase tracking-kicker text-accent-deep mt-[6px] shrink-0"
+                  aria-hidden="true"
+                >
+                  ✗
+                </span>
+                <span className="text-base text-ink-soft leading-relaxed">{c}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </section>
+
+      {/* ── Why this fits {persona} ──────────────────────────────────────── */}
+      {persona && (
+        <section>
+          <div className="grid grid-cols-12 gap-x-6 mb-8">
+            <div className="col-span-12 md:col-span-2">
+              <p className="kicker">§ The verdict</p>
+            </div>
+            <div className="col-span-12 md:col-span-9">
+              <h2 className="display text-3xl md:text-4xl leading-tight">
+                Why this{' '}
+                <span className="display-italic text-accent">fits</span>{' '}
+                {persona.title}.
+              </h2>
+            </div>
+          </div>
+          <WhyThisCar persona={persona} car={car} />
+        </section>
+      )}
+
+      {/* ── What reviewers say ───────────────────────────────────────────── */}
+      <section>
+        <div className="grid grid-cols-12 gap-x-6 mb-8">
+          <div className="col-span-12 md:col-span-2">
+            <p className="kicker">§ Reviewers say</p>
+          </div>
+          <div className="col-span-12 md:col-span-9">
+            <h2 className="display text-3xl md:text-4xl leading-tight">
+              What the press makes of it.
+            </h2>
+          </div>
+        </div>
+        <MediaEmbed media={car.media} />
+      </section>
+
+      {/* ── Lead form / test drive ───────────────────────────────────────── */}
+      <section id="book">
+        <div className="grid grid-cols-12 gap-x-6 mb-8">
+          <div className="col-span-12 md:col-span-2">
+            <p className="kicker">§ Test drive</p>
+          </div>
+          <div className="col-span-12 md:col-span-9">
+            <h2 className="display text-3xl md:text-4xl leading-tight">
+              Want to{' '}
+              <span className="display-italic text-accent">drive</span> it?
+            </h2>
+            <p className="mt-3 text-ink-muted max-w-xl">
+              Dealer will call within 24 hours. Drive the {car.brand} {car.model} on your
+              own streets — no showroom pressure.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-12 gap-x-6">
+          <div className="col-span-12 md:col-span-9 md:col-start-3">
             <LeadForm carId={car.id} personaId={persona?.id} />
           </div>
         </div>

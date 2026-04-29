@@ -1,7 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   clear as clearStore,
   read,
@@ -41,52 +41,95 @@ function formatPrice(lakh: number): string {
   return `₹${lakh.toFixed(1)} L`;
 }
 
-// Spec rows in the order they should render down each column.
-const SPEC_ROWS: { label: string; render: (c: Car) => string }[] = [
+// ─── Spec rows ────────────────────────────────────────────────────────────────
+// Each row knows how to render its display text and (optionally) extract a
+// numeric value used to pick the "best" car per row. `better` decides whether
+// higher or lower wins. If `value` returns undefined for any car, the row is
+// skipped from highlighting (gracefully handles missing data).
+type SpecRow = {
+  label: string;
+  render: (c: Car) => string;
+  value?: (c: Car) => number | undefined;
+  better?: 'high' | 'low';
+};
+
+const SPEC_ROWS: SpecRow[] = [
   { label: 'Body', render: (c) => BODY_LABEL[c.body] ?? c.body },
   { label: 'Fuel', render: (c) => FUEL_LABEL[c.fuel] ?? c.fuel },
   {
     label: 'Transmission',
     render: (c) => TRANSMISSION_LABEL[c.transmission] ?? c.transmission,
   },
-  { label: 'Seats', render: (c) => `${c.seats}` },
-  { label: 'Fuel efficiency', render: (c) => `${c.fuelEfficiencyKmpl} kmpl` },
+  { label: 'Seats', render: (c) => `${c.seats}`, value: (c) => c.seats, better: 'high' },
   {
-    label: 'Safety',
-    render: (c) => `${c.safetyStars}${c.safetyStars === 1 ? ' star' : ' stars'}`,
+    label: 'FE (kmpl)',
+    render: (c) => `${c.fuelEfficiencyKmpl}`,
+    value: (c) => c.fuelEfficiencyKmpl,
+    better: 'high',
   },
-  { label: 'Boot', render: (c) => `${c.bootLitres} L` },
-  { label: 'Length', render: (c) => `${c.lengthMm} mm` },
-  { label: 'Ground clearance', render: (c) => `${c.groundClearanceMm} mm` },
+  {
+    label: 'Safety (★)',
+    render: (c) => `${c.safetyStars}`,
+    value: (c) => c.safetyStars,
+    better: 'high',
+  },
+  {
+    label: 'Boot (L)',
+    render: (c) => `${c.bootLitres}`,
+    value: (c) => c.bootLitres,
+    better: 'high',
+  },
+  {
+    label: 'Length (mm)',
+    render: (c) => `${c.lengthMm}`,
+    value: (c) => c.lengthMm,
+    better: 'high',
+  },
+  {
+    label: 'Ground (mm)',
+    render: (c) => `${c.groundClearanceMm}`,
+    value: (c) => c.groundClearanceMm,
+    better: 'high',
+  },
 ];
 
-function CarColumnSkeleton() {
+// ─── Loading skeleton ─────────────────────────────────────────────────────────
+function LoadingState({ count }: { count: number }) {
   return (
-    <div className="rounded-3xl border border-black/5 bg-white p-6 shadow-sm min-w-[280px] flex-1 animate-pulse">
-      <div className="aspect-[16/10] w-full rounded-2xl bg-ink-soft/10" />
-      <div className="mt-4 h-5 w-2/3 rounded bg-ink-soft/10" />
-      <div className="mt-2 h-4 w-1/2 rounded bg-ink-soft/10" />
-      <div className="mt-4 h-7 w-1/3 rounded bg-ink-soft/10" />
-      <div className="mt-6 space-y-2">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-4 w-full rounded bg-ink-soft/5" />
+    <section className="border border-rule bg-paper-dark/30 p-12 md:p-16">
+      <p className="kicker text-center">§ Fetching dossiers …</p>
+      <div className="mt-8 flex flex-col items-center gap-3">
+        {Array.from({ length: count > 0 ? count : 3 }).map((_, i) => (
+          <div
+            key={i}
+            className="h-px w-48 md:w-72 bg-rule animate-pulse"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
         ))}
       </div>
-    </div>
+    </section>
   );
 }
 
+// ─── Top-review cell ──────────────────────────────────────────────────────────
 function TopReview({ media }: { media: MediaLink[] }) {
   const first = media[0];
   if (!first) {
-    return <p className="text-sm text-ink-muted">No reviews yet.</p>;
+    return (
+      <p className="font-display italic text-sm text-ink-muted">
+        No reviews on file yet.
+      </p>
+    );
   }
   if (first.type === 'youtube' && first.youtubeId) {
     return (
-      <figure className="space-y-2">
-        <div className="relative aspect-video">
+      <figure className="space-y-3">
+        <div
+          className="relative w-full bg-paper-deep/40"
+          style={{ aspectRatio: '16 / 9' }}
+        >
           <iframe
-            className="absolute inset-0 w-full h-full rounded-2xl"
+            className="absolute inset-0 w-full h-full"
             src={`https://www.youtube.com/embed/${first.youtubeId}`}
             loading="lazy"
             allowFullScreen
@@ -94,30 +137,70 @@ function TopReview({ media }: { media: MediaLink[] }) {
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           />
         </div>
-        <figcaption className="text-xs text-ink-soft leading-snug">
-          <span className="font-medium text-ink">{first.title}</span>
-          <span className="text-ink-muted"> · {first.source}</span>
+        <figcaption className="space-y-1">
+          <p className="kicker">{first.source}</p>
+          <p className="font-display italic text-sm text-ink-soft leading-snug">
+            {first.title}
+          </p>
         </figcaption>
       </figure>
     );
   }
-  // article fallback
+  // article fallback — thin link card with kicker source + italic title + mono cta
   return (
     <a
       href={first.url}
       target="_blank"
       rel="noopener noreferrer"
-      className="block rounded-2xl border border-black/5 bg-white p-4 hover:border-accent/40 transition"
+      className="group block border border-rule bg-paper p-4 hover:border-ink transition-colors duration-300"
     >
-      <p className="font-medium text-ink leading-snug text-sm">{first.title}</p>
-      <p className="mt-1 text-xs text-ink-muted">{first.source}</p>
-      <span className="mt-2 inline-block text-xs font-medium text-accent">
-        Read on {first.source} →
-      </span>
+      <p className="kicker">{first.source}</p>
+      <p className="mt-2 font-display italic text-sm text-ink leading-snug">
+        {first.title}
+      </p>
+      <p className="mt-3 font-mono text-[10px] uppercase tracking-kicker text-accent group-hover:text-accent-deep transition-colors">
+        → Read on {first.source}
+      </p>
     </a>
   );
 }
 
+// ─── Compute "best" car indices per spec row ─────────────────────────────────
+// Returns a Map<rowLabel, Set<carIndex>> with the winning indices.
+// Returns an empty set for the row when:
+//   - any car is missing the value (defensive)
+//   - all cars tie
+function useBestPerRow(cars: Car[]): Map<string, Set<number>> {
+  return useMemo(() => {
+    const map = new Map<string, Set<number>>();
+    for (const row of SPEC_ROWS) {
+      if (!row.value || !row.better) {
+        map.set(row.label, new Set());
+        continue;
+      }
+      const values = cars.map((c) => row.value!(c));
+      if (values.some((v) => v === undefined)) {
+        map.set(row.label, new Set());
+        continue;
+      }
+      const nums = values as number[];
+      const best = row.better === 'high' ? Math.max(...nums) : Math.min(...nums);
+      const winners = nums
+        .map((v, i) => (v === best ? i : -1))
+        .filter((i) => i >= 0);
+      // If all tie, no highlight.
+      if (winners.length === cars.length) {
+        map.set(row.label, new Set());
+      } else {
+        map.set(row.label, new Set(winners));
+      }
+    }
+    // Price (lower is better) — handled separately in the column header.
+    return map;
+  }, [cars]);
+}
+
+// ─── Page ────────────────────────────────────────────────────────────────────
 export default function ComparePage() {
   const [mounted, setMounted] = useState(false);
   const [ids, setIds] = useState<string[]>([]);
@@ -170,345 +253,448 @@ export default function ComparePage() {
   // Pre-mount placeholder — keeps SSR markup minimal & predictable.
   if (!mounted) {
     return (
-      <div className="space-y-8">
-        <header>
-          <h1 className="text-3xl font-semibold tracking-tight">Compare</h1>
+      <div className="space-y-20">
+        <header className="grid grid-cols-12 gap-x-6 items-end">
+          <div className="col-span-12 md:col-span-2">
+            <p className="kicker">§ The compare</p>
+          </div>
+          <div className="col-span-12 md:col-span-9 mt-4 md:mt-0">
+            <h1 className="display text-[40px] md:text-[60px] leading-[1.02] tracking-tight text-ink">
+              <span className="display-italic">Side</span>-by-side.
+            </h1>
+          </div>
         </header>
       </div>
     );
   }
 
   const headerCount = ids.length;
+  const carsLoaded = cars && cars.length > 0;
 
   return (
-    <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-3xl lg:text-4xl font-semibold tracking-tight text-ink">
-            {headerCount === 0
-              ? 'Compare'
-              : `Compare ${headerCount} car${headerCount === 1 ? '' : 's'}`}
-          </h1>
-          <p className="mt-1 text-sm text-ink-muted">
-            Side-by-side specs, pros, cons, and reviewer takes.
-          </p>
+    <div className="space-y-20">
+      {/* ── Page masthead ────────────────────────────────────────────────── */}
+      <header className="grid grid-cols-12 gap-x-6 items-end">
+        <div className="col-span-12 md:col-span-2">
+          <p className="kicker">§ The compare</p>
         </div>
-        {headerCount > 0 && (
-          <button
-            type="button"
-            onClick={() => clearStore()}
-            className="text-sm text-ink-muted hover:text-ink underline underline-offset-4"
-          >
-            Clear all
-          </button>
-        )}
+        <div className="col-span-12 md:col-span-10 mt-4 md:mt-0">
+          <div className="flex flex-wrap items-end justify-between gap-6">
+            <div className="min-w-0">
+              <h1 className="display text-[40px] md:text-[60px] leading-[1.02] tracking-tight text-ink">
+                <span className="display-italic">Side</span>-by-side.
+              </h1>
+              <p className="kicker mt-4">
+                {headerCount === 0
+                  ? 'No cars yet · the deciding factors only'
+                  : `${headerCount} car${headerCount === 1 ? '' : 's'} · the deciding factors only`}
+              </p>
+            </div>
+            {headerCount > 0 && (
+              <button
+                type="button"
+                onClick={() => clearStore()}
+                aria-label="Clear all cars from comparison"
+                className="font-mono text-[10px] uppercase tracking-kicker px-3 py-2 border border-rule bg-paper text-ink-soft hover:border-ink hover:text-ink transition-all duration-300"
+              >
+                Clear all
+              </button>
+            )}
+          </div>
+        </div>
       </header>
 
-      {/* Empty state */}
+      <div className="rule" />
+
+      {/* ── Empty state ──────────────────────────────────────────────────── */}
       {ids.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-black/10 bg-white p-10 text-center">
-          <p className="text-base text-ink-soft">
-            Nothing to compare yet — add cars from your persona shortlist.
-          </p>
-          <Link
-            href="/"
-            className="mt-4 inline-flex items-center rounded-full bg-accent px-5 py-2 text-sm font-medium text-white hover:bg-accent/90 transition"
-          >
-            Pick a persona
-          </Link>
-        </div>
-      )}
-
-      {/* Loading skeleton */}
-      {ids.length > 0 && loading && cars === null && (
-        <div className="overflow-x-auto -mx-5 px-5">
-          <div className="flex gap-5 min-w-fit">
-            {ids.map((id) => (
-              <CarColumnSkeleton key={id} />
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Error state */}
-      {error && (
-        <div className="rounded-3xl border border-red-200 bg-red-50 p-6 text-sm text-red-800">
-          {error}
-        </div>
-      )}
-
-      {/* Comparison grid */}
-      {ids.length > 0 && cars && cars.length > 0 && (
-        <>
-          {/* Mobile: stacked cards */}
-          <div className="md:hidden space-y-5">
-            {cars.map((car) => (
-              <article
-                key={car.id}
-                className="rounded-3xl border border-black/5 bg-white p-5 shadow-sm"
-              >
-                <div className="flex items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <h2 className="font-semibold tracking-tight text-lg truncate">
-                      {car.brand} {car.model}
-                    </h2>
-                    <p className="text-xs text-ink-muted truncate">
-                      {car.variant}
-                    </p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => remove(car.id)}
-                    aria-label={`Remove ${car.brand} ${car.model} from comparison`}
-                    className="shrink-0 inline-flex w-7 h-7 items-center justify-center rounded-full bg-ink-soft/5 text-ink-muted hover:bg-ink-soft/10 hover:text-ink transition"
-                  >
-                    ×
-                  </button>
-                </div>
-
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={car.imageUrl}
-                  alt={`${car.brand} ${car.model} ${car.variant}`}
-                  className="mt-4 w-full aspect-[16/10] rounded-2xl object-cover bg-ink-soft/5"
-                />
-
-                <div className="mt-4 text-2xl font-semibold tabular-nums">
-                  {formatPrice(car.priceLakh)}
-                </div>
-
-                <dl className="mt-4 divide-y divide-black/5">
-                  {SPEC_ROWS.map((row) => (
-                    <div
-                      key={row.label}
-                      className="flex items-center justify-between py-2.5 text-sm"
-                    >
-                      <dt className="text-ink-muted">{row.label}</dt>
-                      <dd className="font-medium tabular-nums capitalize">
-                        {row.render(car)}
-                      </dd>
-                    </div>
-                  ))}
-                </dl>
-
-                <div className="mt-5 grid grid-cols-2 gap-4">
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-emerald-700">
-                      Pros
-                    </h3>
-                    <ul className="mt-2 space-y-1.5">
-                      {car.prosCons.pros.slice(0, 3).map((p) => (
-                        <li
-                          key={p}
-                          className="flex items-start gap-2 text-sm text-ink-soft"
-                        >
-                          <span
-                            className="mt-0.5 text-emerald-600 font-bold"
-                            aria-hidden="true"
-                          >
-                            ✓
-                          </span>
-                          <span>{p}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h3 className="text-xs font-semibold uppercase tracking-wide text-red-700">
-                      Cons
-                    </h3>
-                    <ul className="mt-2 space-y-1.5">
-                      {car.prosCons.cons.slice(0, 3).map((c) => (
-                        <li
-                          key={c}
-                          className="flex items-start gap-2 text-sm text-ink-soft"
-                        >
-                          <span
-                            className="mt-0.5 text-red-600 font-bold"
-                            aria-hidden="true"
-                          >
-                            ✗
-                          </span>
-                          <span>{c}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                <div className="mt-5">
-                  <h3 className="text-xs font-semibold uppercase tracking-wide text-ink-muted">
-                    Top review
-                  </h3>
-                  <div className="mt-2">
-                    <TopReview media={car.media} />
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-
-          {/* Desktop: CSS grid with sticky label column. Each row is a labeled
-              spec; each car gets its own column. The label column is sticky
-              for horizontal scroll on overflow. */}
-          <div className="hidden md:block">
-            <div className="overflow-x-auto -mx-5 px-5 pb-2">
-              <div
-                className="grid gap-5 min-w-fit"
-                style={{
-                  gridTemplateColumns: `minmax(160px, 200px) repeat(${cars.length}, minmax(280px, 1fr))`,
-                }}
-              >
-                {/* Row: header (title block) */}
-                <div className="sticky left-0 bg-[#fafaf7] z-10" />
-                {cars.map((car) => (
-                  <div
-                    key={`hdr-${car.id}`}
-                    className="rounded-t-3xl border border-b-0 border-black/5 bg-white p-6 shadow-sm relative"
-                  >
-                    <button
-                      type="button"
-                      onClick={() => remove(car.id)}
-                      aria-label={`Remove ${car.brand} ${car.model} from comparison`}
-                      className="absolute top-3 right-3 inline-flex w-7 h-7 items-center justify-center rounded-full bg-ink-soft/5 text-ink-muted hover:bg-ink-soft/10 hover:text-ink transition"
-                    >
-                      ×
-                    </button>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={car.imageUrl}
-                      alt={`${car.brand} ${car.model} ${car.variant}`}
-                      className="w-full aspect-[16/10] rounded-2xl object-cover bg-ink-soft/5"
-                    />
-                    <h2 className="mt-4 font-semibold tracking-tight text-lg leading-tight">
-                      {car.brand} {car.model}
-                    </h2>
-                    <p className="text-xs text-ink-muted mt-0.5">
-                      {car.variant}
-                    </p>
-                    <p className="mt-3 text-2xl font-semibold tabular-nums">
-                      {formatPrice(car.priceLakh)}
-                    </p>
-                    <p className="text-xs text-ink-muted">ex-showroom</p>
-                  </div>
-                ))}
-
-                {/* Spec rows: each row spans label cell + one cell per car */}
-                {SPEC_ROWS.map((row, rowIdx) => (
-                  <RowGroup
-                    key={row.label}
-                    label={row.label}
-                    isLast={false}
-                    isFirst={rowIdx === 0}
-                    cars={cars}
-                    render={row.render}
-                  />
-                ))}
-
-                {/* Pros */}
-                <div className="sticky left-0 bg-[#fafaf7] z-10 px-2 py-3 text-xs font-semibold uppercase tracking-wide text-emerald-700 self-start">
-                  Pros
-                </div>
-                {cars.map((car) => (
-                  <div
-                    key={`pros-${car.id}`}
-                    className="border-x border-black/5 bg-white px-6 py-4"
-                  >
-                    <ul className="space-y-1.5">
-                      {car.prosCons.pros.slice(0, 3).map((p) => (
-                        <li
-                          key={p}
-                          className="flex items-start gap-2 text-sm text-ink-soft"
-                        >
-                          <span
-                            className="mt-0.5 text-emerald-600 font-bold"
-                            aria-hidden="true"
-                          >
-                            ✓
-                          </span>
-                          <span>{p}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {/* Cons */}
-                <div className="sticky left-0 bg-[#fafaf7] z-10 px-2 py-3 text-xs font-semibold uppercase tracking-wide text-red-700 self-start">
-                  Cons
-                </div>
-                {cars.map((car) => (
-                  <div
-                    key={`cons-${car.id}`}
-                    className="border-x border-black/5 bg-white px-6 py-4"
-                  >
-                    <ul className="space-y-1.5">
-                      {car.prosCons.cons.slice(0, 3).map((c) => (
-                        <li
-                          key={c}
-                          className="flex items-start gap-2 text-sm text-ink-soft"
-                        >
-                          <span
-                            className="mt-0.5 text-red-600 font-bold"
-                            aria-hidden="true"
-                          >
-                            ✗
-                          </span>
-                          <span>{c}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-
-                {/* Top review (last row, rounded bottom) */}
-                <div className="sticky left-0 bg-[#fafaf7] z-10 px-2 py-3 text-xs font-semibold uppercase tracking-wide text-ink-muted self-start">
-                  Top review
-                </div>
-                {cars.map((car) => (
-                  <div
-                    key={`rev-${car.id}`}
-                    className="rounded-b-3xl border border-t-0 border-black/5 bg-white px-6 py-5 shadow-sm"
-                  >
-                    <TopReview media={car.media} />
-                  </div>
-                ))}
+        <section className="border border-rule bg-paper-dark/30 p-10 md:p-16">
+          <div className="grid grid-cols-12 gap-x-6">
+            <div className="col-span-12 md:col-span-2">
+              <p className="kicker">§ Nothing to compare yet</p>
+            </div>
+            <div className="col-span-12 md:col-span-9 mt-4 md:mt-0">
+              <h2 className="display text-3xl md:text-4xl leading-tight">
+                Add cars from your{' '}
+                <span className="display-italic text-accent">shortlist</span>.
+              </h2>
+              <p className="mt-5 font-display italic text-lg text-ink-soft max-w-2xl leading-snug">
+                Pick any persona, then tap + Compare on a car you&apos;re
+                considering — up to three.
+              </p>
+              <div className="mt-8">
+                <Link
+                  href="/"
+                  className="kicker text-accent border-b border-accent/40 hover:border-accent pb-1 transition-colors duration-300"
+                >
+                  → Pick a persona
+                </Link>
               </div>
             </div>
           </div>
-        </>
+        </section>
+      )}
+
+      {/* ── Loading state ────────────────────────────────────────────────── */}
+      {ids.length > 0 && loading && cars === null && (
+        <LoadingState count={ids.length} />
+      )}
+
+      {/* ── Error state ──────────────────────────────────────────────────── */}
+      {error && (
+        <section className="border border-accent bg-accent-soft/30 p-6">
+          <p className="kicker text-accent-deep">§ Something broke</p>
+          <p className="mt-2 font-display italic text-base text-ink-soft">
+            {error}
+          </p>
+        </section>
+      )}
+
+      {/* ── Comparison body ──────────────────────────────────────────────── */}
+      {ids.length > 0 && carsLoaded && cars && (
+        <ComparisonBody cars={cars} />
       )}
     </div>
   );
 }
 
-// Internal: a single labeled spec row in the desktop grid. Renders the sticky
-// label cell + one value cell per car, preserving border + background between
-// the header and the trailing rows so the column reads as one connected card.
+// ─── Comparison body — separate so we can call useMemo for "best" hints ─────
+function ComparisonBody({ cars }: { cars: Car[] }) {
+  const bestPerRow = useBestPerRow(cars);
+
+  // Price (lower is better)
+  const bestPrice = useMemo(() => {
+    const prices = cars.map((c) => c.priceLakh);
+    if (prices.length === 0) return new Set<number>();
+    const min = Math.min(...prices);
+    const winners = prices
+      .map((p, i) => (p === min ? i : -1))
+      .filter((i) => i >= 0);
+    if (winners.length === cars.length) return new Set<number>();
+    return new Set(winners);
+  }, [cars]);
+
+  return (
+    <>
+      {/* ── Mobile: stacked editorial blocks ────────────────────────────── */}
+      <div className="md:hidden space-y-px bg-rule border border-rule">
+        {cars.map((car, i) => (
+          <article key={car.id} className="bg-paper p-6 relative">
+            <button
+              type="button"
+              onClick={() => remove(car.id)}
+              aria-label={`Remove ${car.brand} ${car.model} from comparison`}
+              className="absolute top-4 right-4 font-mono text-[14px] leading-none text-ink-muted hover:text-accent-deep transition-colors w-7 h-7 inline-flex items-center justify-center border border-rule hover:border-accent-deep"
+            >
+              ×
+            </button>
+
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={car.imageUrl}
+              alt={`${car.brand} ${car.model} ${car.variant}`}
+              className="w-full aspect-[16/10] object-cover bg-paper-deep/40"
+            />
+
+            <div className="mt-5 space-y-1">
+              <p className="kicker">{car.brand}</p>
+              <h2 className="display text-[26px] leading-[1.1] tracking-tight text-ink">
+                {car.model}
+              </h2>
+              <p className="font-display italic text-base text-ink-muted">
+                {car.variant}
+              </p>
+            </div>
+
+            <div className="mt-4 flex items-baseline gap-3">
+              <span
+                className={`font-mono text-2xl tabular-nums tracking-tight ${
+                  bestPrice.has(i) ? 'text-forest' : 'text-ink'
+                }`}
+              >
+                {formatPrice(car.priceLakh)}
+              </span>
+              <span className="kicker">ex-showroom</span>
+            </div>
+
+            <dl className="mt-6 border-t border-rule">
+              {SPEC_ROWS.map((row) => {
+                const winners = bestPerRow.get(row.label) ?? new Set<number>();
+                const isBest = winners.has(i);
+                return (
+                  <div
+                    key={row.label}
+                    className="flex items-center justify-between py-3 border-b border-rule"
+                  >
+                    <dt className="kicker">{row.label}</dt>
+                    <dd
+                      className={`font-mono text-sm tabular-nums capitalize ${
+                        isBest ? 'text-forest' : 'text-ink'
+                      }`}
+                    >
+                      {row.render(car)}
+                    </dd>
+                  </div>
+                );
+              })}
+            </dl>
+
+            <div className="mt-6 grid grid-cols-2 gap-6">
+              <div>
+                <p className="kicker text-forest">The case for</p>
+                <ul className="mt-3 space-y-2">
+                  {car.prosCons.pros.slice(0, 3).map((p) => (
+                    <li
+                      key={p}
+                      className="flex items-start gap-2 text-sm text-ink-soft leading-snug"
+                    >
+                      <span
+                        className="mt-[2px] font-mono text-[10px] text-forest shrink-0"
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div>
+                <p className="kicker text-accent-deep">The case against</p>
+                <ul className="mt-3 space-y-2">
+                  {car.prosCons.cons.slice(0, 3).map((c) => (
+                    <li
+                      key={c}
+                      className="flex items-start gap-2 text-sm text-ink-soft leading-snug"
+                    >
+                      <span
+                        className="mt-[2px] font-mono text-[10px] text-accent-deep shrink-0"
+                        aria-hidden="true"
+                      >
+                        ✗
+                      </span>
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+
+            <div className="mt-6">
+              <p className="kicker">§ Top review</p>
+              <div className="mt-3">
+                <TopReview media={car.media} />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+
+      {/* ── Desktop: editorial spec sheet (sticky label column) ─────────── */}
+      <div className="hidden md:block">
+        <div className="overflow-x-auto -mx-5 px-5 pb-2">
+          <div
+            className="grid min-w-fit border border-rule bg-rule"
+            style={{
+              gridTemplateColumns: `minmax(180px, 220px) repeat(${cars.length}, minmax(280px, 1fr))`,
+              gap: '1px',
+            }}
+          >
+            {/* Row: column headers (image, brand kicker, model, variant, price) */}
+            <div className="sticky left-0 z-10 bg-paper-dark/40 px-5 py-6 self-stretch flex flex-col justify-end">
+              <p className="kicker">§ The contenders</p>
+            </div>
+            {cars.map((car, i) => (
+              <div
+                key={`hdr-${car.id}`}
+                className="bg-paper p-6 relative"
+              >
+                <button
+                  type="button"
+                  onClick={() => remove(car.id)}
+                  aria-label={`Remove ${car.brand} ${car.model} from comparison`}
+                  className="absolute top-3 right-3 z-10 font-mono text-[14px] leading-none text-ink-muted hover:text-accent-deep transition-colors w-7 h-7 inline-flex items-center justify-center border border-rule hover:border-accent-deep bg-paper"
+                >
+                  ×
+                </button>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={car.imageUrl}
+                  alt={`${car.brand} ${car.model} ${car.variant}`}
+                  className="w-full aspect-[16/10] object-cover bg-paper-deep/40"
+                />
+                <div className="mt-4 space-y-1">
+                  <p className="kicker">{car.brand}</p>
+                  <h2 className="display text-[28px] leading-[1.05] tracking-tight text-ink truncate">
+                    {car.model}
+                  </h2>
+                  <p className="font-display italic text-base text-ink-muted truncate">
+                    {car.variant}
+                  </p>
+                </div>
+                <div className="mt-4 flex items-baseline gap-3">
+                  <span
+                    className={`font-mono text-2xl tabular-nums tracking-tight ${
+                      bestPrice.has(i) ? 'text-forest' : 'text-ink'
+                    }`}
+                  >
+                    {formatPrice(car.priceLakh)}
+                  </span>
+                  <span className="kicker">ex-showroom</span>
+                </div>
+              </div>
+            ))}
+
+            {/* Spec rows */}
+            {SPEC_ROWS.map((row, rowIdx) => {
+              const winners = bestPerRow.get(row.label) ?? new Set<number>();
+              const stripe = rowIdx % 2 === 1;
+              return (
+                <RowGroup
+                  key={row.label}
+                  label={row.label}
+                  cars={cars}
+                  render={row.render}
+                  winners={winners}
+                  stripe={stripe}
+                />
+              );
+            })}
+
+            {/* Pros — "The case for" */}
+            <div className="sticky left-0 z-10 bg-paper-dark/40 px-5 py-5 self-stretch flex items-start">
+              <p className="kicker text-forest">The case for</p>
+            </div>
+            {cars.map((car) => (
+              <div key={`pros-${car.id}`} className="bg-paper px-6 py-5">
+                <ul className="space-y-2">
+                  {car.prosCons.pros.slice(0, 3).map((p) => (
+                    <li
+                      key={p}
+                      className="flex items-start gap-2 text-sm text-ink-soft leading-snug"
+                    >
+                      <span
+                        className="mt-[2px] font-mono text-[10px] text-forest shrink-0"
+                        aria-hidden="true"
+                      >
+                        ✓
+                      </span>
+                      <span>{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+
+            {/* Cons — "The case against" */}
+            <div className="sticky left-0 z-10 bg-paper-dark/40 px-5 py-5 self-stretch flex items-start">
+              <p className="kicker text-accent-deep">The case against</p>
+            </div>
+            {cars.map((car) => (
+              <div key={`cons-${car.id}`} className="bg-paper px-6 py-5">
+                <ul className="space-y-2">
+                  {car.prosCons.cons.slice(0, 3).map((c) => (
+                    <li
+                      key={c}
+                      className="flex items-start gap-2 text-sm text-ink-soft leading-snug"
+                    >
+                      <span
+                        className="mt-[2px] font-mono text-[10px] text-accent-deep shrink-0"
+                        aria-hidden="true"
+                      >
+                        ✗
+                      </span>
+                      <span>{c}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+
+            {/* Top review */}
+            <div className="sticky left-0 z-10 bg-paper-dark/40 px-5 py-5 self-stretch flex items-start">
+              <p className="kicker">§ Top review</p>
+            </div>
+            {cars.map((car) => (
+              <div key={`rev-${car.id}`} className="bg-paper px-6 py-5">
+                <TopReview media={car.media} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Bottom "Next" block ─────────────────────────────────────────── */}
+      <section className="grid grid-cols-12 gap-x-6 mt-20 pt-10 border-t border-rule">
+        <div className="col-span-12 md:col-span-2">
+          <p className="kicker">§ Next</p>
+        </div>
+        <div className="col-span-12 md:col-span-10 mt-4 md:mt-0 space-y-3">
+          {cars.map((car) => (
+            <Link
+              key={`next-${car.id}`}
+              href={`/cars/${car.id}`}
+              className="group flex items-baseline gap-3 border-b border-rule hover:border-ink py-3 transition-colors duration-300"
+            >
+              <span className="font-display text-lg md:text-xl text-ink">
+                {car.brand} {car.model}
+              </span>
+              <span className="font-display italic text-base text-ink-muted">
+                {car.variant}
+              </span>
+              <span className="block flex-1 h-px bg-rule/60 group-hover:bg-ink/40 transition-colors duration-500" />
+              <span className="kicker text-accent">Read the dossier</span>
+              <span className="font-display text-xl text-accent leading-none transition-transform duration-300 group-hover:translate-x-1">
+                →
+              </span>
+            </Link>
+          ))}
+        </div>
+      </section>
+    </>
+  );
+}
+
+// ─── Internal: a single labeled spec row in the desktop grid ─────────────────
 function RowGroup({
   label,
   cars,
   render,
+  winners,
+  stripe,
 }: {
   label: string;
-  isFirst: boolean;
-  isLast: boolean;
   cars: Car[];
   render: (c: Car) => string;
+  winners: Set<number>;
+  stripe: boolean;
 }) {
+  const labelBg = stripe ? 'bg-paper-dark/50' : 'bg-paper-dark/40';
+  const cellBg = stripe ? 'bg-paper-dark/30' : 'bg-paper';
   return (
     <>
-      <div className="sticky left-0 bg-[#fafaf7] z-10 px-2 py-3 text-sm text-ink-muted self-center">
-        {label}
+      <div
+        className={`sticky left-0 z-10 ${labelBg} px-5 py-4 self-stretch flex items-center`}
+      >
+        <p className="kicker">{label}</p>
       </div>
-      {cars.map((car) => (
-        <div
-          key={`${label}-${car.id}`}
-          className="border-x border-black/5 bg-white px-6 py-3 text-sm font-medium tabular-nums capitalize"
-        >
-          {render(car)}
-        </div>
-      ))}
+      {cars.map((car, i) => {
+        const isBest = winners.has(i);
+        return (
+          <div
+            key={`${label}-${car.id}`}
+            className={`${cellBg} px-6 py-4 flex items-center`}
+          >
+            <span
+              className={`font-mono text-sm tabular-nums capitalize ${
+                isBest ? 'text-forest' : 'text-ink'
+              }`}
+            >
+              {render(car)}
+            </span>
+          </div>
+        );
+      })}
     </>
   );
 }
