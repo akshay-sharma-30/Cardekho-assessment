@@ -6,9 +6,15 @@ import type { MatchResponse } from '@/lib/types';
 
 const Body = z.object({
   personaId: z.string().min(1),
+  // Page size for the returned shortlist. Matcher always scores the full
+  // catalog (sorted by score), then we slice. Default sized for the UI's
+  // top-N grid; cap prevents pathological payloads as the catalog grows.
+  limit: z.number().int().min(1).max(100).default(24),
 });
 
 // POST /api/match — given a personaId returns the scored shortlist.
+// Status: real matcher + real persona/car data. Mocked: hand-tuned weights,
+// no learned ranker, no personalization beyond the persona. See FEATURES.md §2.
 export async function POST(req: Request) {
   try {
     const json = await req.json().catch(() => null);
@@ -20,13 +26,15 @@ export async function POST(req: Request) {
       );
     }
 
-    const persona = repo.persona(parsed.data.personaId);
+    const { personaId, limit } = parsed.data;
+    const persona = repo.persona(personaId);
     if (!persona) {
       return NextResponse.json({ error: 'persona_not_found' }, { status: 404 });
     }
 
     const cars = repo.allCars();
-    const matches = matchCarsToPersona(persona, cars);
+    const allMatches = matchCarsToPersona(persona, cars);
+    const matches = allMatches.slice(0, limit);
     const popular = repo.popularInPersona(persona.id, 3);
 
     const body: MatchResponse = {
@@ -34,6 +42,11 @@ export async function POST(req: Request) {
       matches,
       totalCandidates: cars.length,
       popularInPersona: popular,
+      meta: {
+        limit,
+        total: allMatches.length,
+        hasMore: allMatches.length > matches.length,
+      },
     };
     return NextResponse.json(body);
   } catch (err) {

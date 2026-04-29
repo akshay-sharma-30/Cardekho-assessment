@@ -6,6 +6,7 @@ import LeadForm from '@/components/LeadForm';
 import MediaEmbed from '@/components/MediaEmbed';
 import WhyThisCar from '@/components/WhyThisCar';
 import CompareButton from '@/components/CompareButton';
+import RecordView from '@/components/RecordView';
 
 interface PageProps {
   params: { id: string };
@@ -56,13 +57,12 @@ export default async function Page({ params, searchParams }: PageProps) {
 
   const persona = searchParams.persona ? repo.persona(searchParams.persona) : null;
 
-  repo.recordView({ carId: car.id, personaId: persona?.id ?? null });
-
   const backHref = persona ? `/personas/${persona.id}` : '/';
   const backLabel = persona ? persona.title : 'all personas';
 
   return (
     <div className="space-y-10">
+      <RecordView carId={car.id} personaId={persona?.id ?? null} />
       <Link
         href={backHref}
         className="inline-flex items-center text-sm text-ink-muted hover:text-ink transition"

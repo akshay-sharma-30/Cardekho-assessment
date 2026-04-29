@@ -8,6 +8,8 @@ const Body = z.object({
 });
 
 // POST /api/views — record a car-detail view event for analytics.
+// Status: real write. Mocked: no bot filter, no de-dup, no time decay,
+// ephemeral on Vercel /tmp. See FEATURES.md §6.
 export async function POST(req: Request) {
   try {
     const json = await req.json().catch(() => null);

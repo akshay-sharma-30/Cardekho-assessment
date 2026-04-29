@@ -4,7 +4,9 @@ import { repo } from '@/lib/repo';
 
 const Body = z.object({
   carId: z.string().min(1),
-  personaId: z.string().min(1).optional(),
+  // `.nullish()` so the client can send either `null` (anonymous lead, no
+  // persona context) or omit the key entirely. See FEATURES.md §5.
+  personaId: z.string().min(1).nullish(),
   intent: z.enum(['test_drive', 'callback', 'dealer_contact']),
   name: z.string().min(2).max(80),
   // 10-digit Indian mobile number; allows optional leading +91 / 0.
@@ -13,6 +15,8 @@ const Body = z.object({
 });
 
 // POST /api/leads — capture a buyer intent (test drive, callback, dealer).
+// Status: real validation + DB write. Mocked: no OTP, no CRM webhook, no rate
+// limit, ephemeral on Vercel /tmp. See FEATURES.md §5.
 export async function POST(req: Request) {
   try {
     const json = await req.json().catch(() => null);

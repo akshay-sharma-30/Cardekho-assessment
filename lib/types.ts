@@ -118,6 +118,13 @@ export interface ViewEvent {
   createdAt?: string;
 }
 
+// Pagination envelope for list endpoints. Additive — not every list uses it yet.
+export interface ListMeta {
+  limit: number;
+  total: number;
+  hasMore: boolean;
+}
+
 // API contract used by the frontend.
 export interface MatchResponse {
   persona: Persona;
@@ -125,4 +132,6 @@ export interface MatchResponse {
   totalCandidates: number;
   // Aggregated insights pulled from the leads/views tables.
   popularInPersona: { carId: string; views: number }[];
+  // `total` = full scored set; `matches` is sliced to `limit`.
+  meta: ListMeta;
 }
