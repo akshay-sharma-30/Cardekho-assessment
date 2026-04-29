@@ -42,24 +42,33 @@ The wire payload is HTML, not JSON — the matcher runs server-side and the buye
 
 ### (b) Car detail view → recordView
 
+The detail page is rendered server-side from `repo.car(id)` directly; the
+client `<RecordView>` component then fires a single `POST /api/views` on
+mount to record the view. `GET /api/cars/[id]` is a pure read used by
+`/compare` (and any other client fetch) — no write side-effect.
+
 ```
-Browser                /api/cars/[id]?persona=p1            repo                SQLite
-   │  GET                       │                            │                    │
-   ├───────────────────────────▶│                            │                    │
-   │                            │  repo.car(id)              │                    │
-   │                            ├───────────────────────────▶│  SELECT cars       │
-   │                            │                            ├───────────────────▶│
-   │                            │  repo.recordView({         │                    │
-   │                            │    carId, personaId })     │                    │
-   │                            ├───────────────────────────▶│  INSERT views      │
-   │                            │                            ├───────────────────▶│
-   │                            │  repo.totalViews(id)       │                    │
-   │                            │  repo.totalLeads(id)       │                    │
-   │                            ├───────────────────────────▶├───────────────────▶│
-   │  { car, totalViews,        │                            │                    │
-   │    totalLeads }            │                            │                    │
-   │◀───────────────────────────┤                            │                    │
+Browser (RSC paint)         repo                SQLite
+   │  GET /cars/p1              │                    │
+   ├───────────────────────────▶│  SELECT cars       │
+   │                            ├───────────────────▶│
+   │  HTML + <RecordView/>      │                    │
+   │◀───────────────────────────┤                    │
+
+Browser (client mount)      /api/views (POST)    repo                SQLite
+   │  fetch /api/views          │                    │                    │
+   ├───────────────────────────▶│  zod parse         │                    │
+   │                            │  repo.recordView   │                    │
+   │                            ├───────────────────▶│  INSERT views      │
+   │                            │                    ├───────────────────▶│
+   │  { ok: true }              │                    │                    │
+   │◀───────────────────────────┤                    │                    │
 ```
+
+`GET /api/cars/[id]` is unchanged in shape — `{ car, totalViews, totalLeads }`
+— but no longer increments the counter. It zod-validates the `id` slug
+(`^[a-z0-9-]+$`, max 80 chars) and returns
+`Cache-Control: public, max-age=60, stale-while-revalidate=300`.
 
 ### (c) Lead submit → /api/leads → repo.createLead
 
@@ -155,13 +164,15 @@ All routes live under `app/api/*/route.ts`. All input is validated with **zod** 
 
 | Method | Path                             | Request shape                                                                                   | Response shape                                                                                   | Validation                                                              |
 | ------ | -------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
-| GET    | `/api/personas`                  | —                                                                                               | `{ personas: Persona[] }`                                                                        | None (read-only).                                                       |
-| POST   | `/api/match`                     | `{ personaId: string }`                                                                         | `MatchResponse { persona, matches[], totalCandidates, popularInPersona[] }`                      | `personaId` non-empty string. 404 if persona missing.                   |
-| GET    | `/api/cars/[id]?persona=<id>`    | URL: `id` (path), `persona` (optional query)                                                    | `{ car: Car, totalViews: number, totalLeads: number }`. **Side effect:** records a view. Also consumed client-side by `/compare` (one fetch per car id in the cart). | `id` non-empty. 404 if car missing.                                     |
-| POST   | `/api/views`                     | `{ carId: string, personaId?: string }`                                                         | `{ ok: true }`                                                                                   | `carId` required, `personaId` optional.                                 |
-| POST   | `/api/leads`                     | `{ carId, personaId?, intent: 'test_drive'\|'callback'\|'dealer_contact', name, phone, city? }` | `{ id: number, ok: true }` on success, or `400` with `{ errors: ZodIssue[] }` on bad input.      | All fields zod-checked; phone shape, intent enum, name length.          |
+| GET    | `/api/personas`                  | —                                                                                               | `{ personas: Persona[], count: number }`. `Cache-Control: public, max-age=60, stale-while-revalidate=300`. | None (read-only).                                                       |
+| POST   | `/api/match`                     | `{ personaId: string, limit?: number }` — `limit` default 24, max 100.                          | `MatchResponse { persona, matches[], totalCandidates, popularInPersona[], meta: ListMeta }`. Matcher scores the full catalog server-side; `matches` is sliced to `limit` after sorting. | `personaId` non-empty string; `limit` int in `[1, 100]`. 404 if persona missing. |
+| GET    | `/api/cars/[id]?persona=<id>`    | URL: `id` (path), `persona` (optional query)                                                    | `{ car: Car, totalViews: number, totalLeads: number }`. **Pure read** — no view-recording side effect. `Cache-Control: public, max-age=60, stale-while-revalidate=300`. Consumed client-side by `/compare` (one fetch per car id in the cart) and by RSC prefetches; view-recording moved to `<RecordView>` (see "View counting" below). | `id` zod-checked: `^[a-z0-9-]+$`, max 80 chars → 400 on bad slug. 404 if car missing. |
+| POST   | `/api/views`                     | `{ carId: string, personaId?: string }`                                                         | `{ ok: true }`. **Sole** source of view counts; called once from `<RecordView>` on the car detail page. | `carId` required, `personaId` optional.                                 |
+| POST   | `/api/leads`                     | `{ carId, personaId?: string \| null, intent: 'test_drive'\|'callback'\|'dealer_contact', name, phone, city? }` — `personaId` is `.nullish()`: pass `null` or omit for an anonymous lead. | `{ id: number, ok: true }` on success, or `400` with `{ errors: ZodIssue[] }` on bad input.      | All fields zod-checked; phone shape, intent enum, name length.          |
 
-`MatchResponse` is the single richest payload — see `lib/types.ts:105`. It carries the persona, the ranked `MatchResult[]` (each with `score`, `fitTier`, and per-criterion `MatchReason[]`), the total candidate pool size, and the top 3 popular cars for that persona.
+`MatchResponse` is the single richest payload — see `lib/types.ts`. It carries the persona, the ranked `MatchResult[]` (each with `score`, `fitTier`, and per-criterion `MatchReason[]`), the total candidate pool size, the top 3 popular cars for that persona, and a `meta: ListMeta` envelope describing the page (`limit`, `total` of the full scored set, `hasMore`).
+
+Each route file starts with a one-line `Status: real / mocked` comment header that cross-references the relevant section in [`docs/FEATURES.md`](./FEATURES.md) so the source of truth for what's mocked is one click away from the handler.
 
 ---
 
@@ -176,9 +187,10 @@ The single source of truth is **[`lib/types.ts`](../lib/types.ts)**. Every layer
 | `MediaLink`     | One YouTube embed or article link with `vetted` flag.                         |
 | `MatchReason`   | One row of the "why this car" breakdown — `criterion`, `passed`, `weight`.    |
 | `MatchResult`   | A car + score (0..100) + reasons + `fitTier`.                                 |
-| `MatchResponse` | Full API payload: persona + ranked matches + popularity stats.                |
-| `Lead`          | Anonymous form submission (test drive / callback / dealer contact).           |
+| `MatchResponse` | Full API payload: persona + ranked matches + popularity stats + `meta: ListMeta`. |
+| `Lead`          | Anonymous form submission (test drive / callback / dealer contact). `personaId` is nullable for the anonymous lead path. |
 | `ViewEvent`     | One row per car detail-page render, keyed on (car, persona).                  |
+| `ListMeta`      | Pagination envelope: `{ limit, total, hasMore }`. Additive — used by `MatchResponse.meta` today; reusable for future list endpoints. |
 
 Rule of thumb: **if you change one of these shapes, audit every layer.** That's the point of the contract.
 
@@ -196,6 +208,20 @@ Rule of thumb: **if you change one of these shapes, audit every layer.** That's 
 - **SSR safety:** `read()` returns `[]` when `window` is undefined; `subscribe` is a no-op outside the browser. Components consuming the store (`components/CompareCart.tsx`, `components/CompareButton.tsx`, `app/compare/page.tsx`) gate initial render with a `mounted` flag so the SSR markup and the first client paint agree — without it, the header pill would flash for users with a non-empty cart.
 
 `/compare` is itself a client component: on mount it reads `localStorage`, fetches each car via `/api/cars/[id]`, and re-fetches whenever `subscribe` fires. There is no new server endpoint for compare.
+
+`components/RecordView.tsx` is the other client-side component in the app. It's mounted by `app/cars/[id]/page.tsx` and fires a single `POST /api/views` on mount, guarded by a `fired` ref so React's StrictMode double-invoke doesn't double-count. Failure is silent — analytics must never break the page.
+
+---
+
+## View counting
+
+View recording is **client-driven**, not a side effect of the detail-page render or of `GET /api/cars/[id]`. The reasons:
+
+- **RSC prefetches.** Hovering a `<Link>` triggers a server-side prefetch of `/cars/[id]`; folding `recordView` into that path inflated the counter by every hover.
+- **`/compare` fan-out.** The compare page fetches `GET /api/cars/[id]` once per car in the cart on every mount. With recording in the GET handler, a 3-car compare added 3 phantom views per visit.
+- **CDN warmups & health checks** hit the GET handler too; same problem.
+
+The fix is the small client component `components/RecordView.tsx`. It mounts on `/cars/[id]`, fires one `POST /api/views`, and never fires again (ref guard). `GET /api/cars/[id]` is now a pure read with `Cache-Control` so RSC prefetches can be cached by the browser and CDN. `POST /api/views` remains uncached and zod-validated.
 
 ---
 

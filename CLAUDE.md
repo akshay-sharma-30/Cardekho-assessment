@@ -13,7 +13,7 @@ CarFit helps clueless car buyers in India choose a car. Pick a persona ("New par
 ## The contract
 
 **Types in [`lib/types.ts`](./lib/types.ts) are the single source of truth.**
-Never let the DB schema, JSON seed files, UI props, or API responses drift from these types. If you change a field, audit:
+Never let the DB schema, JSON seed files, UI props, or API responses drift from these types. The contract includes `ListMeta = { limit, total, hasMore }` and `MatchResponse.meta: ListMeta` — when you add a paginated list endpoint, reuse that envelope rather than minting a new one. If you change a field, audit:
 
 1. `lib/types.ts` — the type itself.
 2. `data/personas.json` / `data/cars.json` — seed data.
@@ -33,14 +33,14 @@ A drift here is the highest-cost bug class in this codebase.
 app/
   page.tsx                  Persona picker (RSC)
   personas/[id]/page.tsx    Shortlist (RSC; reads searchParams, merges over persona.preferences, calls matcher)
-  cars/[id]/page.tsx        Detail + media + lead form (RSC + 'use client' form)
+  cars/[id]/page.tsx        Detail + media + lead form (RSC + 'use client' form; mounts <RecordView>)
   compare/page.tsx          Side-by-side compare ('use client'; reads localStorage, fetches via /api/cars/[id])
   api/
-    personas/route.ts
-    match/route.ts
-    cars/[id]/route.ts
-    views/route.ts
-    leads/route.ts
+    personas/route.ts       GET; { personas, count }, Cache-Control
+    match/route.ts          POST; accepts limit (default 24, max 100); response carries meta: ListMeta
+    cars/[id]/route.ts      GET; pure read (zod-validated slug, Cache-Control); no view side-effect
+    views/route.ts          POST; sole writer for view counts
+    leads/route.ts          POST; personaId is .nullish() — anonymous leads OK
 components/
   PersonaCard.tsx
   CarCard.tsx
@@ -52,12 +52,13 @@ components/
   CompareButton.tsx         ('use client'; add/remove a car from the cart)
   CompareCart.tsx           ('use client'; header pill, live count)
   PersonaTweakPanel.tsx     ('use client'; writes URL searchParams, server re-ranks)
+  RecordView.tsx            ('use client'; one POST /api/views on mount, ref-guarded)
 data/
   personas.json             12 hand-authored entries (incl. flexibility[] per persona)
   cars.json                 ~30 hand-authored entries
   app.db                    gitignored; auto-seeded
 lib/
-  types.ts                  THE CONTRACT (incl. Persona.flexibility)
+  types.ts                  THE CONTRACT (incl. Persona.flexibility, ListMeta, MatchResponse.meta)
   db.ts                     better-sqlite3 + schema (server-only)
   seed.ts                   JSON → SQLite (server-only)
   repo.ts                   ALL DB access goes here (server-only)
@@ -83,6 +84,7 @@ CLAUDE.md                   ← you are here
 - **JSON-blob columns** (`personas.data`, `cars.data`) are an intentional pragmatic choice — don't normalize them out without a reason. Hydrate via `rowToPersona` / `rowToCar` in `lib/seed.ts`.
 - **Client-side cross-component state: prefer a small typed wrapper around `localStorage` with a custom window event** (see `lib/compare-store.ts`). No React context, no global singleton; the store is the source of truth, components subscribe.
 - **URL `searchParams` are the canonical source for view-state on server-rendered pages** (see `app/personas/[id]/page.tsx`). Don't mirror them into client state — let the server read and re-render.
+- **Read endpoints carry `Cache-Control: public, max-age=60, stale-while-revalidate=300`** so RSC fetches and CDN edges don't stampede the origin. Writes (`/api/leads`, `/api/views`) are uncached and zod-validated. Each route file opens with a one-line `Status: real / mocked` header that cross-references the matching `docs/FEATURES.md` section.
 
 ---
 
@@ -95,6 +97,7 @@ CLAUDE.md                   ← you are here
 - **Letting `lib/types.ts` drift from `data/*.json`.** If you add a field to the type, add it to every JSON entry; if you make a field optional, keep the matcher's `undefined` handling sound. The seeder will silently `JSON.stringify` anything — you won't get a runtime error until a query reads the bad row.
 - **Persisting anything important to SQLite on Vercel.** `/tmp` is ephemeral. Treat the deploy as a demo until the Turso/Postgres swap.
 - **Running the matcher on the client.** Keep it server-side; it's the contract for ranking. The tweak panel writes URL params and the server re-ranks — don't shortcut it with a client-side recompute.
+- **Folding writes into a GET handler.** RSC `<Link>` prefetches, the `/compare` fan-out, CDN warmups, and health checks all hit GETs without representing real users — analytics tied to a GET will inflate. Writes go to a POST endpoint; if a write needs to fire on render, mount a small client component à la `components/RecordView.tsx` (single `useEffect` + `useRef` guard, silent failure).
 
 ---
 

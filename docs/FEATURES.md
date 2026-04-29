@@ -47,6 +47,7 @@ Server-side scores every car against the chosen persona's preferences and return
 
 ### How it works
 - `lib/matcher.ts` exports `matchPersona(persona, cars): MatchResult[]`.
+- `POST /api/match` accepts `{ personaId, limit? }` (limit default 24, max 100). The matcher always scores the full catalog server-side and sorts; the response slices `matches` to `limit` and returns a `meta: ListMeta` envelope (`{ limit, total, hasMore }`) so callers can paginate later without reshaping the payload.
 - **Hard fails** (drop the car):
   - Price exceeds `budgetMaxLakh` by more than 25%.
   - Seats < `preferences.seats`.
@@ -157,6 +158,7 @@ Each car detail page has a single form: **Test drive / Callback / Dealer contact
 - `app/api/leads/route.ts` validates with zod and calls `repo.createLead(lead: Lead)` (`lib/repo.ts:63`).
 - Schema: `leads(id, car_id, persona_id, intent, name, phone, city, created_at)` (`lib/db.ts:62`).
 - `intent ∈ {test_drive, callback, dealer_contact}` per the `Lead` type (`lib/types.ts:86`).
+- `personaId` is `.nullish()` in the zod body — clients can send `null` or omit the field entirely. This is the **anonymous lead path** for buyers who land directly on `/cars/[id]` (e.g. from a shared link or `/compare`) without ever picking a persona; they no longer 400.
 
 ### What's mocked
 - No phone verification — any string passes basic shape validation.
@@ -184,7 +186,9 @@ Each car detail page has a single form: **Test drive / Callback / Dealer contact
 Every car detail page records a view event tagged with the persona context. The shortlist page uses these counts to surface "Popular with other [persona] buyers" — social proof at the moment of decision.
 
 ### How it works
-- `GET /api/cars/[id]?persona=<id>` records a view via `repo.recordView({ carId, personaId })` (`lib/repo.ts:57`) and returns `{ car, totalViews, totalLeads }`.
+- View recording happens **client-side** on the car detail page via `components/RecordView.tsx`. The component mounts inside `app/cars/[id]/page.tsx`, fires one `POST /api/views` on mount (guarded by a `useRef` flag so StrictMode's double-invoke doesn't double-count), and silently swallows failures so analytics never breaks the UI.
+- `POST /api/views` is the **sole** writer to the `views` table; `GET /api/cars/[id]` is a pure read.
+- This split exists because folding the write into `GET /api/cars/[id]` inflated the counter: RSC `<Link>` prefetches and the `/compare` fan-out (one fetch per car in the cart) both hit that endpoint without representing real human views. Same problem with CDN warmups and health checks. Moving recording client-side means only an actual mount in a real browser counts.
 - `repo.popularInPersona(personaId, limit=3)` (`lib/repo.ts:31`) groups views by `car_id` for a persona and returns the top N.
 - Indexed by `views_car_persona_idx` (`lib/db.ts:80`).
 
@@ -325,7 +329,7 @@ Defines the interface for a future conversational intake: "I have ₹10L, two ki
 | Matcher                       | Deterministic weighted scoring; no personalization      | Algorithm + transparent reasons       |
 | YouTube IDs                   | Synthetic 11-char strings; not guaranteed to resolve    | Channel attribution copy              |
 | Article URLs                  | Valid-looking paths; not verified to render             | Domain whitelist                      |
-| Lead capture                  | SQLite, ephemeral on Vercel `/tmp`; no SMS/CRM/auth     | Form, validation, DB schema           |
+| Lead capture                  | SQLite, ephemeral on Vercel `/tmp`; no SMS/CRM/auth; anonymous (null `personaId`) accepted | Form, validation, DB schema           |
 | View aggregation              | SQLite count; no bot filter; ephemeral on Vercel        | Schema, persona-scoped grouping       |
 | Compare cart                  | localStorage only; no cross-device sync; no analytics   | UI, store interface, /compare page    |
 | Persona flexibility           | Hand-authored `flexibility[]`; no learning loop         | Matcher hook (`FLEX_SCALE`), reasons  |
