@@ -157,7 +157,7 @@ All routes live under `app/api/*/route.ts`. All input is validated with **zod** 
 | ------ | -------------------------------- | ----------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
 | GET    | `/api/personas`                  | —                                                                                               | `{ personas: Persona[] }`                                                                        | None (read-only).                                                       |
 | POST   | `/api/match`                     | `{ personaId: string }`                                                                         | `MatchResponse { persona, matches[], totalCandidates, popularInPersona[] }`                      | `personaId` non-empty string. 404 if persona missing.                   |
-| GET    | `/api/cars/[id]?persona=<id>`    | URL: `id` (path), `persona` (optional query)                                                    | `{ car: Car, totalViews: number, totalLeads: number }`. **Side effect:** records a view.         | `id` non-empty. 404 if car missing.                                     |
+| GET    | `/api/cars/[id]?persona=<id>`    | URL: `id` (path), `persona` (optional query)                                                    | `{ car: Car, totalViews: number, totalLeads: number }`. **Side effect:** records a view. Also consumed client-side by `/compare` (one fetch per car id in the cart). | `id` non-empty. 404 if car missing.                                     |
 | POST   | `/api/views`                     | `{ carId: string, personaId?: string }`                                                         | `{ ok: true }`                                                                                   | `carId` required, `personaId` optional.                                 |
 | POST   | `/api/leads`                     | `{ carId, personaId?, intent: 'test_drive'\|'callback'\|'dealer_contact', name, phone, city? }` | `{ id: number, ok: true }` on success, or `400` with `{ errors: ZodIssue[] }` on bad input.      | All fields zod-checked; phone shape, intent enum, name length.          |
 
@@ -182,17 +182,51 @@ The single source of truth is **[`lib/types.ts`](../lib/types.ts)**. Every layer
 
 Rule of thumb: **if you change one of these shapes, audit every layer.** That's the point of the contract.
 
+`Persona.flexibility?: Array<keyof preferences>` is a per-persona list of negotiable preference fields. The matcher reads it via the `CRITERION_TO_PREF` map (`lib/matcher.ts:44`) and scales any flexible criterion's contribution and displayed weight by `FLEX_SCALE = 0.5` (`lib/matcher.ts:40`). Hard fails (budget +25%, seats < required) ignore flexibility.
+
+---
+
+## Client-side state: compare cart
+
+`lib/compare-store.ts` is a tiny typed wrapper around `localStorage` for the `/compare` cart. The single store is the source of truth; no React context, no global mutable singleton.
+
+- **Storage key:** `carfit:compare` (`STORAGE_KEY`). JSON-encoded `string[]` of car ids.
+- **Cap:** `MAX_ITEMS = 3`, deduped on every write.
+- **Cross-component sync:** every `write` dispatches a custom `'compare:change'` window event (`EVENT_NAME`). `subscribe(cb)` listens for that event **and** the cross-tab `storage` event so changes from other tabs propagate.
+- **SSR safety:** `read()` returns `[]` when `window` is undefined; `subscribe` is a no-op outside the browser. Components consuming the store (`components/CompareCart.tsx`, `components/CompareButton.tsx`, `app/compare/page.tsx`) gate initial render with a `mounted` flag so the SSR markup and the first client paint agree — without it, the header pill would flash for users with a non-empty cart.
+
+`/compare` is itself a client component: on mount it reads `localStorage`, fetches each car via `/api/cars/[id]`, and re-fetches whenever `subscribe` fires. There is no new server endpoint for compare.
+
+---
+
+## URL-driven tweaks
+
+`app/personas/[id]/page.tsx` is a server component that treats URL `searchParams` as the canonical source for persona overrides. The client-side `PersonaTweakPanel` only writes to the URL via `router.replace('?...', { scroll: false })`; the server reads and re-ranks on the next render. No client state is mirrored.
+
+URL key map (all optional):
+
+| Key      | Type             | Validation                                                              |
+| -------- | ---------------- | ----------------------------------------------------------------------- |
+| `budget` | number (lakh)    | Clamped to `[4, 40]`.                                                   |
+| `seats`  | number           | Must be one of `{4, 5, 7}`; else ignored.                               |
+| `trans`  | string           | Must be `'manual'` or `'automatic'`; else ignored.                      |
+| `fuel`   | comma-sep string | Each token filtered to a valid `FuelType`; empty list → ignored.        |
+| `safety` | number           | Must be one of `{3, 4, 5}`; else ignored.                               |
+
+Validation lives in `parseOverrides()` in `app/personas/[id]/page.tsx`. Valid overrides are merged on top of `persona.preferences` to produce a `tweakedPersona` passed to `matchCarsToPersona`. A "Tweaked" pill renders when any override is active; "Reset to default" clears the query string.
+
 ---
 
 ## How to add a new persona
 
 1. Edit `data/personas.json`, add an entry that satisfies the `Persona` type (`lib/types.ts:10`).
-2. Delete the local DB so the seeder re-runs:
+2. Set `flexibility` (optional but recommended): list the preference fields this persona is willing to negotiate on. The matcher will scale their weight by `FLEX_SCALE = 0.5` so mismatches hurt half as much. Example: a `young-family-metro` who'll trade some efficiency / boot size for a great car → `"flexibility": ["fuelEfficiencyKmplMin", "boot"]`.
+3. Delete the local DB so the seeder re-runs:
    ```bash
    rm data/app.db
    ```
-3. `npm run dev` — the next request that hits `lib/repo.ts` will lazy-seed `data/personas.json` into the `personas` table (`lib/db.ts:87-95`).
-4. Verify on `/` that the new tile shows up; click through to `/personas/<new-id>` and confirm the matcher returns sensible cars.
+4. `npm run dev` — the next request that hits `lib/repo.ts` will lazy-seed `data/personas.json` into the `personas` table (`lib/db.ts:87-95`).
+5. Verify on `/` that the new tile shows up; click through to `/personas/<new-id>` and confirm the matcher returns sensible cars.
 
 ---
 

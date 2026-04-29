@@ -6,23 +6,24 @@ Each feature below is broken into **What it does**, **How it works**, **What's m
 
 ## 1. Persona-based discovery
 
-| Layer            | MVP (mock)                                      | Production                                        |
-| ---------------- | ----------------------------------------------- | ------------------------------------------------- |
-| Persona catalog  | 6 hand-authored entries in `data/personas.json` | CMS-managed, A/B tested copy, localized           |
-| Personalisation  | None                                            | Returning-visitor persona memory (cookie + auth)  |
+| Layer            | MVP (mock)                                       | Production                                        |
+| ---------------- | ------------------------------------------------ | ------------------------------------------------- |
+| Persona catalog  | 12 hand-authored entries in `data/personas.json` | CMS-managed, A/B tested copy, localized           |
+| Personalisation  | None                                             | Returning-visitor persona memory (cookie + auth)  |
 
 ### What it does
-The home page shows 6 lifestyle tiles ("New parent in the metro", "Highway commuter", "First-time buyer", etc.) instead of the usual 30-filter form. One click takes the buyer to a curated 3-car shortlist. Lower friction, higher commitment per click.
+The home page shows 12 lifestyle tiles ("New parent in the metro", "Highway commuter", "EV-curious metro buyer", "Seven-seater multigen", etc.) instead of the usual 30-filter form. One click takes the buyer to a curated 3-car shortlist. Lower friction, higher commitment per click.
 
 ### How it works
-- Personas are defined in `data/personas.json` against the `Persona` type (`lib/types.ts:10`).
+- Personas are defined in `data/personas.json` against the `Persona` type (`lib/types.ts:10`), including a per-persona `flexibility` array of negotiable preference fields the matcher honors (see Feature 8).
 - On first DB hit, `lib/seed.ts` writes them into the `personas` table (`lib/db.ts:33`); the full preference blob is stored as JSON in the `data` column.
 - `app/page.tsx` is a server component that calls `repo.allPersonas()` (`lib/repo.ts:8`) and renders `components/PersonaCard.tsx`.
 - Clicking a tile navigates to `/personas/[id]`.
 
 ### What's mocked
-- 6 hand-authored static entries. No persona evolution, no learning, no localization.
+- 12 hand-authored static entries (the original 6 + `ev-curious-metro`, `seven-seater-multigen`, `fleet-cabbie`, `compact-second-car`, `enthusiast-driver`, `retired-comfort`). No persona evolution, no learning, no localization.
 - Preference fields are coarse (e.g. `boot: 'small' | 'medium' | 'large'`) — designed for clarity, not nuance.
+- `flexibility` lists are hand-authored; no learning loop yet (see Feature 8).
 - No tracking of which personas convert best.
 
 ### Production version
@@ -202,7 +203,90 @@ Every car detail page records a view event tagged with the persona context. The 
 
 ---
 
-## 7. Mocked LLM hook (V2 placeholder)
+## 7. Compare cart
+
+| Layer        | MVP (mock)                                                | Production                                              |
+| ------------ | --------------------------------------------------------- | ------------------------------------------------------- |
+| Storage      | `localStorage` under `carfit:compare`, capped at 3 ids    | Server-side cart keyed on phone-OTP'd user / anon cookie |
+| Sync         | Custom `'compare:change'` window event + `storage` event  | `/api/compare/sessions` for cross-device sync           |
+| Page         | `/compare` client component, fetches via `/api/cars/[id]` | Same UI; reads server cart on first render             |
+
+### What it does
+User can add up to 3 cars to a compare cart from car cards or the detail page; `/compare` renders a side-by-side spec table + first-review-per-car. Header pill shows live count.
+
+### How it works
+- Selection state in `localStorage` under key `carfit:compare` (`lib/compare-store.ts:13`), capped at 3 (`MAX_ITEMS`), deduped on every write.
+- Cross-component sync via a custom `'compare:change'` window event broadcast on every write (`lib/compare-store.ts:52`); `subscribe()` also listens for the cross-tab `storage` event.
+- `app/compare/page.tsx` is a client component that reads `localStorage` on mount and fetches each car via `/api/cars/[id]`. `components/CompareCart.tsx` in the header subscribes to the same event for live count updates.
+- `components/CompareButton.tsx` lives on car cards and the detail page; it gates render with a `mounted` flag to avoid hydration drift, and uses `e.stopPropagation()` so clicking it inside a parent `<Link>` doesn't navigate.
+
+### What's mocked
+- Cart state is purely client-side; not bound to a user account, not synced across devices.
+- No analytics on compare-completion as a conversion signal.
+
+### Production version
+- Move to a server-side cart keyed by phone-OTP'd user (or an anonymous cart cookie); persist to Postgres; expose `/api/compare/sessions` for cross-device sync.
+- Add "share this comparison" via signed URL.
+- Instrument compare-completion as a high-intent conversion signal feeding back into ranker training (Feature 2 production version).
+
+---
+
+## 8. Flexibility field on personas
+
+| Layer        | MVP (mock)                                                  | Production                                                 |
+| ------------ | ----------------------------------------------------------- | ---------------------------------------------------------- |
+| Source       | Hand-authored `flexibility[]` per persona in JSON           | Learned per-user from impression / click / lead / dismiss  |
+| Matcher      | `FLEX_SCALE = 0.5` halves weight + scales contribution      | Same hook; weights learned, not hand-tuned                 |
+| UI           | Reason rows tagged ` · flexible`                            | Same                                                       |
+
+### What it does
+Each persona declares which of its preferences are negotiable. The matcher halves the weight of those criteria — mismatching them hurts the score less. UX result: more cars surface above the "stretch" line for personas that have flexibility, which mirrors how real buyers actually shop ("I'd rather get a great car than tick every box").
+
+### How it works
+- `Persona.flexibility?: Array<keyof preferences>` in `lib/types.ts:37`.
+- `lib/matcher.ts` uses a `CRITERION_TO_PREF` map (`lib/matcher.ts:44`) and a `FLEX_SCALE = 0.5` constant (`lib/matcher.ts:40`); if a criterion's underlying pref is in `persona.flexibility`, both the contribution and the displayed `MatchReason.weight` are scaled.
+- Reason text is appended with ` · flexible` so the UI can show why the row is downweighted.
+- Hard-fail rules (budget +25%, seats < required) are unchanged — flexibility never overrides them.
+
+### What's mocked
+- Flexibility lists are hand-authored per persona. No learning loop yet.
+
+### Production version
+- Learn flexibility per real user from their (impression, click, lead, dismiss) signals — e.g., a user who keeps clicking through 6-seater results despite a 5-seat persona is flagging `seats` as flexible.
+- Store learned flexibility per session/account and merge with the persona default at match time.
+- Surface "we noticed you're flexible on X" copy when a learned flex bucket has high confidence.
+
+---
+
+## 9. Persona tweak panel (live re-rank)
+
+| Layer        | MVP (mock)                                                | Production                                              |
+| ------------ | --------------------------------------------------------- | ------------------------------------------------------- |
+| Persistence  | URL `searchParams` only                                   | Saved to user account; can save as a new "my persona"   |
+| Defaults     | Static per persona                                        | A/B tested per geography (Tier 1 vs Tier 2/3)           |
+| Signal use   | None                                                      | Each tweak feeds learned ranking + learned flexibility  |
+
+### What it does
+A collapsible panel on the persona shortlist page lets the user override budget cap, seats, transmission, allowed fuels, and safety floor. Adjusting any control re-ranks the list immediately.
+
+### How it works
+- `components/PersonaTweakPanel.tsx` is a client component; it reads current values from `useSearchParams()` and writes new values via `router.replace('?...', { scroll: false })`.
+- `app/personas/[id]/page.tsx` is a server component that parses `searchParams`, validates, and merges overrides over `persona.preferences` to produce a `tweakedPersona` passed to the matcher.
+- URL keys: `budget`, `seats`, `trans`, `fuel` (comma-separated), `safety`. Validation on the server side: `budget` clamped to [4, 40], `seats` ∈ {4, 5, 7}, `trans` ∈ {manual, automatic}, `fuel` filtered to valid `FuelType` values, `safety` ∈ {3, 4, 5}.
+- `PrefChips` reflect the live tweaked values; a small "Tweaked" pill shows when overrides are active.
+
+### What's mocked
+- Overrides are URL-only; not persisted across sessions.
+- No telemetry on which tweaks correlate with conversion.
+
+### Production version
+- Persist tweaks to the user's account; treat each tweak as a strong signal for learned ranking and learned flexibility (see Feature 8).
+- Allow saving a tweaked persona as a new "my persona".
+- A/B test default control values per geography (Tier 1 vs Tier 2/3 buyers want different defaults).
+
+---
+
+## 10. Mocked LLM hook (V2 placeholder)
 
 | Layer       | MVP (mock)                                                  | Production                                   |
 | ----------- | ----------------------------------------------------------- | -------------------------------------------- |
@@ -236,13 +320,16 @@ Defines the interface for a future conversational intake: "I have ₹10L, two ki
 
 | Feature                       | Mocked                                                  | Real                                  |
 | ----------------------------- | ------------------------------------------------------- | ------------------------------------- |
-| Personas                      | 6 hand-authored JSON entries; no learning               | Schema, matcher integration           |
+| Personas                      | 12 hand-authored JSON entries; no learning              | Schema, matcher integration           |
 | Cars                          | ~30 hand-authored entries; no real-time inventory       | Schema, repo, type contract           |
 | Matcher                       | Deterministic weighted scoring; no personalization      | Algorithm + transparent reasons       |
 | YouTube IDs                   | Synthetic 11-char strings; not guaranteed to resolve    | Channel attribution copy              |
 | Article URLs                  | Valid-looking paths; not verified to render             | Domain whitelist                      |
 | Lead capture                  | SQLite, ephemeral on Vercel `/tmp`; no SMS/CRM/auth     | Form, validation, DB schema           |
 | View aggregation              | SQLite count; no bot filter; ephemeral on Vercel        | Schema, persona-scoped grouping       |
+| Compare cart                  | localStorage only; no cross-device sync; no analytics   | UI, store interface, /compare page    |
+| Persona flexibility           | Hand-authored `flexibility[]`; no learning loop         | Matcher hook (`FLEX_SCALE`), reasons  |
+| Persona tweaks                | URL-only overrides; not persisted; no telemetry         | UI, validation, server-side re-rank   |
 | LLM intake                    | Deterministic keyword matcher; not wired into UI        | `LLMProvider` interface contract      |
 | Auth                          | None — anonymous lead capture                           | n/a                                   |
 | Analytics                     | None                                                    | n/a                                   |

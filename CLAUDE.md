@@ -32,8 +32,9 @@ A drift here is the highest-cost bug class in this codebase.
 ```
 app/
   page.tsx                  Persona picker (RSC)
-  personas/[id]/page.tsx    Shortlist (RSC; calls matcher)
+  personas/[id]/page.tsx    Shortlist (RSC; reads searchParams, merges over persona.preferences, calls matcher)
   cars/[id]/page.tsx        Detail + media + lead form (RSC + 'use client' form)
+  compare/page.tsx          Side-by-side compare ('use client'; reads localStorage, fetches via /api/cars/[id])
   api/
     personas/route.ts
     match/route.ts
@@ -48,17 +49,21 @@ components/
   WhyThisCar.tsx            (per-criterion ✓/✗ list)
   MediaEmbed.tsx            (YouTube + article)
   LeadForm.tsx              ('use client')
+  CompareButton.tsx         ('use client'; add/remove a car from the cart)
+  CompareCart.tsx           ('use client'; header pill, live count)
+  PersonaTweakPanel.tsx     ('use client'; writes URL searchParams, server re-ranks)
 data/
-  personas.json             6 hand-authored entries
+  personas.json             12 hand-authored entries (incl. flexibility[] per persona)
   cars.json                 ~30 hand-authored entries
   app.db                    gitignored; auto-seeded
 lib/
-  types.ts                  THE CONTRACT
+  types.ts                  THE CONTRACT (incl. Persona.flexibility)
   db.ts                     better-sqlite3 + schema (server-only)
   seed.ts                   JSON → SQLite (server-only)
   repo.ts                   ALL DB access goes here (server-only)
-  matcher.ts                Persona → MatchResult[] (server-only)
+  matcher.ts                Persona → MatchResult[] (server-only; honors flexibility via FLEX_SCALE = 0.5)
   llm.ts                    Mock LLM, V2 placeholder (server-only)
+  compare-store.ts          localStorage wrapper for the compare cart (client-only; SSR-safe)
 docs/
   FEATURES.md               Mock vs real
   ARCHITECTURE.md           Data flow, schema, API, recipes
@@ -76,6 +81,8 @@ CLAUDE.md                   ← you are here
 - **All DB access goes through `lib/repo.ts`.** Never call `getDb()` from API routes or pages. If you need a new query, add a method to `repo` and reuse it.
 - **All API input is validated with zod.** Define the schema next to the route handler. Return `400` with the `ZodError.issues` on failure.
 - **JSON-blob columns** (`personas.data`, `cars.data`) are an intentional pragmatic choice — don't normalize them out without a reason. Hydrate via `rowToPersona` / `rowToCar` in `lib/seed.ts`.
+- **Client-side cross-component state: prefer a small typed wrapper around `localStorage` with a custom window event** (see `lib/compare-store.ts`). No React context, no global singleton; the store is the source of truth, components subscribe.
+- **URL `searchParams` are the canonical source for view-state on server-rendered pages** (see `app/personas/[id]/page.tsx`). Don't mirror them into client state — let the server read and re-render.
 
 ---
 
@@ -87,13 +94,14 @@ CLAUDE.md                   ← you are here
 - **Pushing without `npm run build` passing locally.** `next build` catches RSC/client boundary violations and type drift; CI without local checks wastes deploy slots.
 - **Letting `lib/types.ts` drift from `data/*.json`.** If you add a field to the type, add it to every JSON entry; if you make a field optional, keep the matcher's `undefined` handling sound. The seeder will silently `JSON.stringify` anything — you won't get a runtime error until a query reads the bad row.
 - **Persisting anything important to SQLite on Vercel.** `/tmp` is ephemeral. Treat the deploy as a demo until the Turso/Postgres swap.
+- **Running the matcher on the client.** Keep it server-side; it's the contract for ranking. The tweak panel writes URL params and the server re-ranks — don't shortcut it with a client-side recompute.
 
 ---
 
 ## Common tasks
 
 ### Add a persona
-1. Append an entry to `data/personas.json` matching the `Persona` type.
+1. Append an entry to `data/personas.json` matching the `Persona` type. Set `flexibility` (optional but recommended) — list which preferences this persona is willing to negotiate on; the matcher halves their weight via `FLEX_SCALE`.
 2. `rm data/app.db` (locally) so the seeder re-runs.
 3. `npm run dev` — verify the new tile on `/` and the shortlist on `/personas/<new-id>`.
 
@@ -107,6 +115,11 @@ CLAUDE.md                   ← you are here
 2. Define a zod schema next to the handler. Parse the body / query — never trust input.
 3. Call `repo.<method>` — never `getDb()` directly.
 4. Return JSON. On zod failure return `400` with `{ errors: result.error.issues }`.
+
+### Add a tweak control to the persona panel
+1. Add the input to `components/PersonaTweakPanel.tsx`. Read its current value from `useSearchParams()` (with the persona default as fallback) and write via `pushParams((p) => p.set(...))`.
+2. Extend the URL key parser in `app/personas/[id]/page.tsx` (`parseOverrides`) with validation. Mirror the patterns there — clamp / enum-check / drop on invalid; never trust the URL.
+3. Rely on the existing matcher — it consumes whatever's in the merged `tweakedPersona.preferences`. No matcher edit needed unless the new field is a new criterion.
 
 ### Swap to a real LLM
 1. Keep `lib/llm.ts`'s exported `LLMProvider` interface unchanged.
@@ -127,4 +140,4 @@ The next read through `repo` re-seeds from JSON.
 
 Every external integration is stubbed in the MVP. Full ledger, with the production-version recipe for each, in [`docs/FEATURES.md`](./docs/FEATURES.md).
 
-Quick map: persona catalog (mocked), car catalog (mocked), YouTube IDs (synthetic placeholders), article URLs (unverified), lead capture (SQLite, no CRM, no SMS, no auth), view aggregation (SQLite, no bot filter), LLM intake (deterministic keyword stub, not wired into UI).
+Quick map: persona catalog (mocked, 12 hand-authored entries with `flexibility` lists), car catalog (mocked), YouTube IDs (synthetic placeholders), article URLs (unverified), lead capture (SQLite, no CRM, no SMS, no auth), view aggregation (SQLite, no bot filter), compare cart (localStorage, not synced), persona tweaks (URL-only, not persisted), LLM intake (deterministic keyword stub, not wired into UI).

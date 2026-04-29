@@ -2,16 +2,32 @@
 
 **Needs-first car discovery for clueless Indian buyers.**
 
-CarFit helps clueless car buyers in India choose a car. Pick a persona ("New parent in metro", "Highway commuter", etc.), see a curated 3-car shortlist matched to your needs, and on each car detail page watch curated YouTube reviews and read articles from trusted media houses — all in one place. The thesis is conversion-through-trust: surfacing real reviewer opinions in-app cuts the bounce-to-Google that kills aggregator conversion.
+CarFit helps clueless car buyers in India choose a car. Pick a persona ("New parent in metro", "Highway commuter", etc.), tweak the fit if you want, see a curated 3-car shortlist matched to your needs, add a few to compare side-by-side, and on each car detail page watch curated YouTube reviews and read articles from trusted media houses — all in one place. The thesis is conversion-through-trust: surfacing real reviewer opinions in-app cuts the bounce-to-Google that kills aggregator conversion.
 
 ---
 
 ## 30-second demo flow
 
-1. Land on `/` → pick one of 6 lifestyle personas.
-2. `/personas/[id]` → see a transparent 3-car shortlist with per-criterion match breakdown.
-3. `/cars/[id]` → watch 2-3 embedded reviews, read articles from PowerDrift / Autocar / CarWale.
-4. Submit a test-drive / callback request without leaving the page.
+Pick a persona → tweak the fit if you want → see 3 cars → add a few to compare → watch curated reviews → book a test drive.
+
+1. Land on `/` → pick one of 12 lifestyle personas.
+2. `/personas/[id]` → see a transparent 3-car shortlist with per-criterion match breakdown. Open the **Tweak panel** to override budget / seats / transmission / fuels / safety floor; the list re-ranks live.
+3. Hit **+ Compare** on any card to drop it in the cart (max 3); `/compare` renders a side-by-side spec table.
+4. `/cars/[id]` → watch 2-3 embedded reviews, read articles from PowerDrift / Autocar / CarWale.
+5. Submit a test-drive / callback request without leaving the page.
+
+---
+
+## Features
+
+- **Persona-based discovery** — 12 lifestyle tiles → 3-car shortlist with per-criterion match breakdown.
+- **Curated reviews on the detail page** — 2-3 embedded YouTube reviews + articles from trusted Indian media.
+- **Lead capture** — single form: test drive / callback / dealer contact, persisted to SQLite.
+- **Compare cart** — add up to 3 cars from any card; `/compare` renders a side-by-side spec table. State in `localStorage`, synced via a custom window event.
+- **Persona flexibility** — each persona declares which preferences are negotiable; the matcher halves their weight (`FLEX_SCALE = 0.5`) so flexible mismatches hurt half as much.
+- **Live tweak panel** — collapsible panel on the persona shortlist lets the user override budget / seats / transmission / fuels / safety floor; URL `searchParams` are the canonical source and the server re-ranks on the next render.
+
+See [`docs/FEATURES.md`](./docs/FEATURES.md) for the full mock-vs-real breakdown.
 
 ---
 
@@ -64,12 +80,14 @@ Vercel auto-deploys on push to `main`. No env vars required for the MVP.
 | Layer            | Module                          | Responsibility                                |
 | ---------------- | ------------------------------- | --------------------------------------------- |
 | Pages / RSC      | `app/page.tsx`, `app/personas/[id]`, `app/cars/[id]` | Server render UI         |
+| Compare page     | `app/compare/page.tsx`          | Client-side side-by-side comparison           |
 | API              | `app/api/personas`, `match`, `cars`, `views`, `leads` | JSON over HTTP           |
-| Matcher          | `lib/matcher.ts`                | Persona → ranked `MatchResult[]`              |
+| Matcher          | `lib/matcher.ts`                | Persona → ranked `MatchResult[]` (honors `flexibility`) |
 | Data access      | `lib/repo.ts`                   | Single chokepoint over the DB                 |
 | DB / schema      | `lib/db.ts` + `lib/seed.ts`     | better-sqlite3, seed from JSON on first hit   |
 | Type contract    | `lib/types.ts`                  | Source of truth for every entity              |
-| Static catalog   | `data/personas.json`, `data/cars.json` | Hand-authored seed data                |
+| Static catalog   | `data/personas.json`, `data/cars.json` | Hand-authored seed data (12 personas)  |
+| Compare store    | `lib/compare-store.ts`          | localStorage wrapper + custom event           |
 | Mock LLM         | `lib/llm.ts`                    | Deterministic stub (V2 placeholder)           |
 
 ---
@@ -80,18 +98,21 @@ Vercel auto-deploys on push to `main`. No env vars required for the MVP.
 .
 ├── app/                  Next.js App Router (RSC + /api)
 │   ├── page.tsx          Persona picker (home)
-│   ├── personas/[id]/    Shortlist page
+│   ├── personas/[id]/    Shortlist page (reads searchParams for tweaks)
 │   ├── cars/[id]/        Car detail + media + lead form
+│   ├── compare/          Side-by-side compare ('use client')
 │   └── api/              Route handlers
-├── components/           UI primitives (CarCard, WhyThisCar, MediaEmbed, LeadForm, …)
-├── data/                 Static seed JSON (personas, cars) + app.db (gitignored)
-├── lib/                  Server-only domain code
-│   ├── types.ts          The contract
+├── components/           UI primitives (CarCard, WhyThisCar, MediaEmbed, LeadForm,
+│                          CompareButton, CompareCart, PersonaTweakPanel, …)
+├── data/                 Static seed JSON (12 personas, ~30 cars) + app.db (gitignored)
+├── lib/                  Server-only domain code (+ one client store)
+│   ├── types.ts          The contract (incl. Persona.flexibility)
 │   ├── db.ts             SQLite connection + schema
 │   ├── seed.ts           JSON → SQLite hydration
 │   ├── repo.ts           Read/write API for the rest of the app
-│   ├── matcher.ts        Weighted persona-to-car scoring
-│   └── llm.ts            Mocked LLM (V2 placeholder)
+│   ├── matcher.ts        Weighted persona-to-car scoring (FLEX_SCALE-aware)
+│   ├── llm.ts            Mocked LLM (V2 placeholder)
+│   └── compare-store.ts  localStorage wrapper for the compare cart (client-only)
 ├── docs/                 FEATURES.md, ARCHITECTURE.md
 ├── CLAUDE.md             Guide for Claude Code sessions
 ├── next.config.mjs
