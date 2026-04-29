@@ -5,6 +5,7 @@ import { repo } from '@/lib/repo';
 import LeadForm from '@/components/LeadForm';
 import MediaEmbed from '@/components/MediaEmbed';
 import WhyThisCar from '@/components/WhyThisCar';
+import CompareButton from '@/components/CompareButton';
 
 interface PageProps {
   params: { id: string };
@@ -89,12 +90,15 @@ export default async function Page({ params, searchParams }: PageProps) {
               {car.brand} {car.model}{' '}
               <span className="text-ink-muted font-medium">{car.variant}</span>
             </h1>
-            <p className="mt-3 flex items-baseline gap-2">
-              <span className="text-2xl font-semibold text-ink tabular-nums">
-                ₹{car.priceLakh.toFixed(1)} L
-              </span>
-              <span className="text-sm text-ink-muted">ex-showroom</span>
-            </p>
+            <div className="mt-3 flex items-center justify-between gap-4 flex-wrap">
+              <p className="flex items-baseline gap-2">
+                <span className="text-2xl font-semibold text-ink tabular-nums">
+                  ₹{car.priceLakh.toFixed(1)} L
+                </span>
+                <span className="text-sm text-ink-muted">ex-showroom</span>
+              </p>
+              <CompareButton carId={car.id} variant="inline" />
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2">

@@ -32,6 +32,31 @@ const TIER_EXCELLENT = 85;
 const TIER_STRONG = 70;
 const TIER_GOOD = 55;
 
+// Flexibility multiplier — when a persona lists a preference field as
+// flexible, the corresponding criterion's effective weight is scaled by this
+// factor. Mismatching a flexible criterion still hurts, just half as much.
+// Net effect: a persona with flexibility is MORE permissive — more cars score
+// above the 'stretch' line because mismatches cost less.
+const FLEX_SCALE = 0.5;
+
+// Map from MatchReason.criterion → the underlying preferences field name.
+// Used to look up whether a criterion is flexible for the persona.
+const CRITERION_TO_PREF: Record<
+  string,
+  NonNullable<Persona['flexibility']>[number]
+> = {
+  budget: 'budgetMaxLakh',
+  seats: 'seats',
+  fuel: 'fuel',
+  transmission: 'transmission',
+  safety: 'safetyMin',
+  efficiency: 'fuelEfficiencyKmplMin',
+  boot: 'boot',
+  parking: 'parkingFriendly',
+  highway: 'highwayCommute',
+  body: 'body',
+};
+
 // Boot size buckets in litres. Sanity: 'small' ≈ a hatch (240-330), 'medium'
 // ≈ compact-SUV / sedan (330-450), 'large' ≈ full SUV / sedan (450+).
 const BOOT_LARGE_MIN = 450;
@@ -52,11 +77,34 @@ function bootRank(b: 'small' | 'medium' | 'large'): number {
 
 export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[] {
   const prefs = persona.preferences;
+  // Persona-level: which preferences are negotiable? Used below to scale the
+  // weight of any criterion whose underlying pref is in this set, halving
+  // its impact (both the contribution and the displayed weight) so that a
+  // mismatch hurts less. Net effect: flexibility makes a persona MORE
+  // permissive — a borderline car keeps a higher net score because flexible
+  // mismatches cost less, so more cars rank above the 'stretch' line.
+  const flexible = new Set<string>(persona.flexibility ?? []);
 
   const results: MatchResult[] = cars.map((car) => {
-    const reasons: MatchReason[] = [];
-    let score = 0;
+    // Build raw (unscaled) reasons + their score contributions first, then
+    // apply flexibility scaling per-criterion at the end. Each entry holds:
+    //   criterion       — the MatchReason.criterion string
+    //   contribution    — raw points scored (0..weight)
+    //   weight          — full criterion weight (pre-scaling)
+    //   passed/detail   — display fields for the reason
+    type RawEntry = {
+      criterion: string;
+      contribution: number;
+      weight: number;
+      passed: boolean;
+      detail: string;
+    };
+    const raw: RawEntry[] = [];
     let hardFail = false;
+    // Body is a soft modifier (penalty / no weight); kept separate so the
+    // flex-scaling pass doesn't apply to its zero-weight reason rows.
+    let bodyPenalty = 0;
+    let bodyReason: MatchReason | null = null;
 
     // ─── 1. Budget (weight 25) ──────────────────────────────────────────
     // Sanity: a car at exactly budgetMaxLakh gets full marks. Up to +10%
@@ -64,39 +112,40 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     const budgetWeight = 25;
     const overBy = (car.priceLakh - prefs.budgetMaxLakh) / prefs.budgetMaxLakh;
     if (overBy > 0.25) {
-      reasons.push({
+      raw.push({
         criterion: 'budget',
+        contribution: 0,
+        weight: budgetWeight,
         passed: false,
         detail: `₹${car.priceLakh}L — way over your ₹${prefs.budgetMaxLakh}L budget`,
-        weight: budgetWeight,
       });
       hardFail = true;
     } else if (overBy <= 0) {
       // Comfortably within budget (or right at the cap) — full marks.
-      score += budgetWeight;
-      reasons.push({
+      raw.push({
         criterion: 'budget',
+        contribution: budgetWeight,
+        weight: budgetWeight,
         passed: true,
         detail: `₹${car.priceLakh}L — comfortably under your ₹${prefs.budgetMaxLakh}L budget`,
-        weight: budgetWeight,
       });
     } else if (overBy <= 0.1) {
       // A small stretch — half marks.
-      score += budgetWeight * 0.5;
-      reasons.push({
+      raw.push({
         criterion: 'budget',
+        contribution: budgetWeight * 0.5,
+        weight: budgetWeight,
         passed: true,
         detail: `₹${car.priceLakh}L — a slight stretch above ₹${prefs.budgetMaxLakh}L`,
-        weight: budgetWeight,
       });
     } else {
       // 10–25% over: 25% marks; flagged but not fatal.
-      score += budgetWeight * 0.25;
-      reasons.push({
+      raw.push({
         criterion: 'budget',
+        contribution: budgetWeight * 0.25,
+        weight: budgetWeight,
         passed: false,
         detail: `₹${car.priceLakh}L — meaningfully over your ₹${prefs.budgetMaxLakh}L budget`,
-        weight: budgetWeight,
       });
     }
 
@@ -105,29 +154,30 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     // exactly (no wasted bulk).
     const seatsWeight = 15;
     if (car.seats < prefs.seats) {
-      reasons.push({
+      raw.push({
         criterion: 'seats',
+        contribution: 0,
+        weight: seatsWeight,
         passed: false,
         detail: `${car.seats} seats — not enough for your ${prefs.seats}-seat need`,
-        weight: seatsWeight,
       });
       hardFail = true;
     } else if (car.seats === prefs.seats) {
-      score += seatsWeight;
-      reasons.push({
+      raw.push({
         criterion: 'seats',
+        contribution: seatsWeight,
+        weight: seatsWeight,
         passed: true,
         detail: `${car.seats} seats — fits the brief exactly`,
-        weight: seatsWeight,
       });
     } else {
       // Bigger than asked for — full marks but framed as a bonus.
-      score += seatsWeight;
-      reasons.push({
+      raw.push({
         criterion: 'seats',
+        contribution: seatsWeight,
+        weight: seatsWeight,
         passed: true,
         detail: `${car.seats} seats — extra room over your ${prefs.seats}-seat need`,
-        weight: seatsWeight,
       });
     }
 
@@ -136,31 +186,31 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     // Below: linear taper so you still get partial credit.
     const safetyWeight = 15;
     if (car.safetyStars > prefs.safetyMin) {
-      score += safetyWeight;
-      reasons.push({
+      raw.push({
         criterion: 'safety',
+        contribution: safetyWeight,
+        weight: safetyWeight,
         passed: true,
         detail: `${car.safetyStars}-star safety — beats your ${prefs.safetyMin}-star minimum`,
-        weight: safetyWeight,
       });
     } else if (car.safetyStars === prefs.safetyMin) {
-      score += safetyWeight * 0.8;
-      reasons.push({
+      raw.push({
         criterion: 'safety',
+        contribution: safetyWeight * 0.8,
+        weight: safetyWeight,
         passed: true,
         detail: `${car.safetyStars}-star safety — meets your minimum`,
-        weight: safetyWeight,
       });
     } else {
       // Each star below is -25% of the criterion weight.
       const gap = prefs.safetyMin - car.safetyStars;
       const partial = Math.max(0, safetyWeight * (1 - 0.25 * gap));
-      score += partial;
-      reasons.push({
+      raw.push({
         criterion: 'safety',
+        contribution: partial,
+        weight: safetyWeight,
         passed: false,
         detail: `${car.safetyStars}-star safety — below your ${prefs.safetyMin}-star minimum`,
-        weight: safetyWeight,
       });
     }
 
@@ -168,52 +218,53 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     const efficiencyWeight = 10;
     if (prefs.fuelEfficiencyKmplMin) {
       if (car.fuelEfficiencyKmpl >= prefs.fuelEfficiencyKmplMin) {
-        score += efficiencyWeight;
-        reasons.push({
+        raw.push({
           criterion: 'efficiency',
+          contribution: efficiencyWeight,
+          weight: efficiencyWeight,
           passed: true,
           detail: `${car.fuelEfficiencyKmpl} kmpl — easily clears ${prefs.fuelEfficiencyKmplMin} kmpl target`,
-          weight: efficiencyWeight,
         });
       } else {
         // Sanity: 4 kmpl shortfall → 0 marks; smaller gap → linear partial.
         const ratio = car.fuelEfficiencyKmpl / prefs.fuelEfficiencyKmplMin;
         const partial = Math.max(0, efficiencyWeight * ratio - efficiencyWeight * 0.5);
-        score += Math.max(0, partial);
-        reasons.push({
+        raw.push({
           criterion: 'efficiency',
+          contribution: Math.max(0, partial),
+          weight: efficiencyWeight,
           passed: false,
           detail: `${car.fuelEfficiencyKmpl} kmpl — below your ${prefs.fuelEfficiencyKmplMin} kmpl target`,
-          weight: efficiencyWeight,
         });
       }
     } else {
       // No explicit target — half credit (neutral).
-      score += efficiencyWeight * 0.5;
-      reasons.push({
+      raw.push({
         criterion: 'efficiency',
+        contribution: efficiencyWeight * 0.5,
+        weight: efficiencyWeight,
         passed: true,
         detail: `${car.fuelEfficiencyKmpl} kmpl — neutral on efficiency for this persona`,
-        weight: efficiencyWeight,
       });
     }
 
     // ─── 5. Fuel type (weight 10) ───────────────────────────────────────
     const fuelWeight = 10;
     if (prefs.fuel.includes(car.fuel)) {
-      score += fuelWeight;
-      reasons.push({
+      raw.push({
         criterion: 'fuel',
+        contribution: fuelWeight,
+        weight: fuelWeight,
         passed: true,
         detail: `${car.fuel} — matches your acceptable fuels`,
-        weight: fuelWeight,
       });
     } else {
-      reasons.push({
+      raw.push({
         criterion: 'fuel',
+        contribution: 0,
+        weight: fuelWeight,
         passed: false,
         detail: `${car.fuel} — not in your acceptable fuel list`,
-        weight: fuelWeight,
       });
     }
 
@@ -221,27 +272,28 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     const transmissionWeight = 10;
     if (!prefs.transmission) {
       // Persona neutral → half marks.
-      score += transmissionWeight * 0.5;
-      reasons.push({
+      raw.push({
         criterion: 'transmission',
+        contribution: transmissionWeight * 0.5,
+        weight: transmissionWeight,
         passed: true,
         detail: `${car.transmission} — no strong preference`,
-        weight: transmissionWeight,
       });
     } else if (prefs.transmission === car.transmission) {
-      score += transmissionWeight;
-      reasons.push({
+      raw.push({
         criterion: 'transmission',
+        contribution: transmissionWeight,
+        weight: transmissionWeight,
         passed: true,
         detail: `${car.transmission} — matches your preference`,
-        weight: transmissionWeight,
       });
     } else {
-      reasons.push({
+      raw.push({
         criterion: 'transmission',
+        contribution: 0,
+        weight: transmissionWeight,
         passed: false,
         detail: `${car.transmission} — you prefer ${prefs.transmission}`,
-        weight: transmissionWeight,
       });
     }
 
@@ -249,23 +301,23 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     const bootWeight = 5;
     const carBoot = bucketBoot(car.bootLitres);
     if (bootRank(carBoot) >= bootRank(prefs.boot)) {
-      score += bootWeight;
-      reasons.push({
+      raw.push({
         criterion: 'boot',
+        contribution: bootWeight,
+        weight: bootWeight,
         passed: true,
         detail: `${car.bootLitres}L boot — enough for your ${prefs.boot} need`,
-        weight: bootWeight,
       });
     } else {
       // One bucket short → half; two short → zero.
       const gap = bootRank(prefs.boot) - bootRank(carBoot);
       const partial = Math.max(0, bootWeight * (1 - 0.5 * gap));
-      score += partial;
-      reasons.push({
+      raw.push({
         criterion: 'boot',
+        contribution: partial,
+        weight: bootWeight,
         passed: false,
         detail: `${car.bootLitres}L boot — smaller than your ${prefs.boot} need`,
-        weight: bootWeight,
       });
     }
 
@@ -273,46 +325,47 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     // Sanity: anything < 4000mm is "easy" to park; over 4400mm hurts.
     const parkingWeight = 5;
     if (prefs.parkingFriendly == null) {
-      score += parkingWeight * 0.5; // neutral half
-      reasons.push({
+      raw.push({
         criterion: 'parking',
+        contribution: parkingWeight * 0.5,
+        weight: parkingWeight,
         passed: true,
         detail: 'Parking ease — not a priority for you',
-        weight: parkingWeight,
       });
     } else if (prefs.parkingFriendly) {
       if (car.lengthMm < 4000) {
-        score += parkingWeight;
-        reasons.push({
+        raw.push({
           criterion: 'parking',
+          contribution: parkingWeight,
+          weight: parkingWeight,
           passed: true,
           detail: `${car.lengthMm}mm long — easy in tight metro spots`,
-          weight: parkingWeight,
         });
       } else if (car.lengthMm < 4400) {
-        score += parkingWeight * 0.5;
-        reasons.push({
+        raw.push({
           criterion: 'parking',
+          contribution: parkingWeight * 0.5,
+          weight: parkingWeight,
           passed: true,
           detail: `${car.lengthMm}mm long — manageable but not tiny`,
-          weight: parkingWeight,
         });
       } else {
-        reasons.push({
+        raw.push({
           criterion: 'parking',
+          contribution: 0,
+          weight: parkingWeight,
           passed: false,
           detail: `${car.lengthMm}mm long — tough in tight parking`,
-          weight: parkingWeight,
         });
       }
     } else {
       // Persona explicitly doesn't care — full marks.
-      score += parkingWeight;
-      reasons.push({
+      raw.push({
         criterion: 'parking',
+        contribution: parkingWeight,
+        weight: parkingWeight,
         passed: true,
         detail: `${car.lengthMm}mm long — parking ease isn't a priority`,
-        weight: parkingWeight,
       });
     }
 
@@ -320,36 +373,36 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     // Bias: longer car (>4400mm), AT gearbox, refined fuel (diesel/hybrid).
     const highwayWeight = 5;
     if (prefs.highwayCommute == null) {
-      score += highwayWeight * 0.5;
-      reasons.push({
+      raw.push({
         criterion: 'highway',
+        contribution: highwayWeight * 0.5,
+        weight: highwayWeight,
         passed: true,
         detail: 'Highway manners — neutral for this persona',
-        weight: highwayWeight,
       });
     } else if (prefs.highwayCommute) {
       let highwayScore = 0;
       if (car.lengthMm >= 4400) highwayScore += highwayWeight * 0.4;
       if (car.transmission === 'automatic') highwayScore += highwayWeight * 0.3;
       if (car.fuel === 'diesel' || car.fuel === 'hybrid') highwayScore += highwayWeight * 0.3;
-      score += highwayScore;
-      reasons.push({
+      raw.push({
         criterion: 'highway',
+        contribution: highwayScore,
+        weight: highwayWeight,
         passed: highwayScore >= highwayWeight * 0.6,
         detail:
           highwayScore >= highwayWeight * 0.6
             ? `Refined for long highway runs`
             : `Less ideal for daily highway commute`,
-        weight: highwayWeight,
       });
     } else {
       // City-only persona — full marks.
-      score += highwayWeight;
-      reasons.push({
+      raw.push({
         criterion: 'highway',
+        contribution: highwayWeight,
+        weight: highwayWeight,
         passed: true,
         detail: 'Highway commute not a priority',
-        weight: highwayWeight,
       });
     }
 
@@ -357,26 +410,64 @@ export function matchCarsToPersona(persona: Persona, cars: Car[]): MatchResult[]
     // group rather than its own weighted criterion (else it'd inflate
     // matches that already passed the related axes). When body mismatches
     // we just nudge the score down by 5 points capped non-negative — a
-    // single weight pulled from the soft pool.
+    // single weight pulled from the soft pool. If 'body' is in the
+    // persona's flexibility list, halve the penalty too (and tag the
+    // reason " · flexible" below) so a flexible body mismatch hurts less.
     if (prefs.body && !prefs.body.includes(car.body)) {
-      score = Math.max(0, score - 5);
-      reasons.push({
+      const bodyFlex = flexible.has('body');
+      bodyPenalty = bodyFlex ? 5 * FLEX_SCALE : 5;
+      bodyReason = {
         criterion: 'body',
         passed: false,
-        detail: `${car.body} — you preferred ${prefs.body.join(' / ')}`,
+        detail:
+          `${car.body} — you preferred ${prefs.body.join(' / ')}` +
+          (bodyFlex ? ' · flexible' : ''),
         weight: 0,
-      });
+      };
     } else if (prefs.body) {
-      reasons.push({
+      const bodyFlex = flexible.has('body');
+      bodyReason = {
         criterion: 'body',
         passed: true,
-        detail: `${car.body} — matches your preferred body style`,
+        detail:
+          `${car.body} — matches your preferred body style` +
+          (bodyFlex ? ' · flexible' : ''),
         weight: 0,
-      });
+      };
     }
 
+    // ─── Apply flexibility scaling and accumulate score ──────────────────
+    // For each criterion, if its underlying preference is flagged flexible
+    // by the persona, scale BOTH the contribution and the displayed weight
+    // by FLEX_SCALE. The reason's detail string is annotated " · flexible"
+    // so the UI can show why this row is downweighted. The criterion still
+    // contributes — mismatching just hurts half as much.
+    let score = 0;
+    const reasons: MatchReason[] = raw.map((r) => {
+      const prefField = CRITERION_TO_PREF[r.criterion];
+      const isFlex = prefField !== undefined && flexible.has(prefField);
+      const scale = isFlex ? FLEX_SCALE : 1;
+      score += r.contribution * scale;
+      return {
+        criterion: r.criterion,
+        passed: r.passed,
+        detail: isFlex ? `${r.detail} · flexible` : r.detail,
+        weight: r.weight * scale,
+      };
+    });
+
+    // Tack on body penalty / reason after weighted criteria.
+    if (bodyPenalty > 0) score = Math.max(0, score - bodyPenalty);
+    if (bodyReason) reasons.push(bodyReason);
+
     // ─── Hard-fail override ─────────────────────────────────────────────
+    // Hard fails (budget +25%, seats < required) ignore flexibility — those
+    // rules still force score=0 and tier='stretch' regardless.
     if (hardFail) score = 0;
+
+    // Cap at 100. Flexibility scaling can never push the score above 100
+    // (it only ever scales weights DOWN), but keep the cap as a safety net.
+    score = Math.min(100, score);
 
     // ─── Tier ───────────────────────────────────────────────────────────
     const tier: MatchResult['fitTier'] = hardFail

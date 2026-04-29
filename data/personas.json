@@ -22,7 +22,8 @@
       "4-star+ Global NCAP / Bharat NCAP rating",
       "Automatic gearbox for bumper-to-bumper traffic",
       "Under 4m length so metro parking stays easy"
-    ]
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "boot"]
   },
   {
     "id": "first-time-tier2",
@@ -46,7 +47,8 @@
       "20+ kmpl real world fuel efficiency",
       "Service network in every district town",
       "Light clutch and easy controls for new drivers"
-    ]
+    ],
+    "flexibility": ["boot", "safetyMin"]
   },
   {
     "id": "weekend-warrior",
@@ -70,7 +72,8 @@
       "Automatic gearbox for ghat sections",
       "Larger boot for trekking gear",
       "Confident high-speed manners"
-    ]
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "transmission"]
   },
   {
     "id": "highway-commuter",
@@ -95,7 +98,8 @@
       "Automatic with cruise control",
       "Low NVH at 100kmph",
       "Long-haul comfort seats and big boot"
-    ]
+    ],
+    "flexibility": ["budgetMaxLakh", "boot"]
   },
   {
     "id": "young-pro-solo",
@@ -120,7 +124,8 @@
       "Premium-feeling cabin with connected tech",
       "Compact enough for valet parking anywhere",
       "Designs that turn heads at the office"
-    ]
+    ],
+    "flexibility": ["boot", "fuelEfficiencyKmplMin"]
   },
   {
     "id": "premium-upgrader",
@@ -145,6 +150,157 @@
       "Premium European or feature-loaded cabin",
       "Powerful turbo-petrol or refined diesel automatic",
       "Strong residual value on resale"
-    ]
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "budgetMaxLakh"]
+  },
+  {
+    "id": "ev-curious-metro",
+    "title": "EV-curious metro buyer",
+    "tagline": "Plug in, glide silently through gridlock",
+    "emoji": "⚡",
+    "description": "You live in a metro with home charging available and you're ready to try going electric — or at least a strong hybrid. You'll stretch the budget for the right battery, but tight parking and an automatic-only commute are the deal-makers.",
+    "preferences": {
+      "budgetMaxLakh": 14,
+      "budgetMinLakh": 9,
+      "seats": 5,
+      "fuel": ["electric", "hybrid"],
+      "transmission": "automatic",
+      "body": ["hatchback", "compact-suv"],
+      "boot": "medium",
+      "safetyMin": 4,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "Pure-EV or strong-hybrid powertrain",
+      "Single-pedal driving for stop-go traffic",
+      "Compact footprint for metro parking",
+      "Lower running costs vs. petrol equivalent"
+    ],
+    "flexibility": ["budgetMaxLakh", "fuelEfficiencyKmplMin"]
+  },
+  {
+    "id": "seven-seater-multigen",
+    "title": "Seven-seater, multi-generational family",
+    "tagline": "Room for kids, in-laws, and the weekend trip",
+    "emoji": "👴👵",
+    "description": "Three generations under one roof — kids in school, parents at home, in-laws over for the holidays. You need genuine seven-seat space, ground clearance for the village run, and an automatic for the daily school commute.",
+    "preferences": {
+      "budgetMaxLakh": 18,
+      "budgetMinLakh": 12,
+      "seats": 7,
+      "fuel": ["petrol", "diesel", "hybrid"],
+      "transmission": "automatic",
+      "body": ["muv", "suv"],
+      "boot": "medium",
+      "safetyMin": 4,
+      "fuelEfficiencyKmplMin": 14
+    },
+    "highlights": [
+      "Genuine 7-seat layout with usable third row",
+      "200mm+ ground clearance for unbroken village roads",
+      "Automatic gearbox for school-run convenience",
+      "4-star+ safety to protect the whole family"
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "parkingFriendly"]
+  },
+  {
+    "id": "fleet-cabbie",
+    "title": "Fleet cabbie / commercial driver",
+    "tagline": "200km a day — make every paisa count",
+    "emoji": "🚖",
+    "description": "You drive 200km+ every day for a living, ferrying passengers between airport, office and home. Running cost is everything — diesel or hybrid, manual is fine, and you'd rather pocket the savings on a 3-star car than splurge on safety extras you'll never feel.",
+    "preferences": {
+      "budgetMaxLakh": 12,
+      "budgetMinLakh": 7,
+      "seats": 5,
+      "fuel": ["diesel", "hybrid"],
+      "transmission": "manual",
+      "body": ["sedan", "muv"],
+      "boot": "medium",
+      "safetyMin": 3,
+      "fuelEfficiencyKmplMin": 18,
+      "highwayCommute": true
+    },
+    "highlights": [
+      "Diesel or strong-hybrid for the lowest per-km cost",
+      "18+ kmpl real-world efficiency",
+      "Spacious sedan/MUV body for paying passengers",
+      "Proven service network and cheap spares"
+    ],
+    "flexibility": ["transmission", "safetyMin"]
+  },
+  {
+    "id": "compact-second-car",
+    "title": "Compact second car",
+    "tagline": "Tiny budget, just for the school run",
+    "emoji": "🚗",
+    "description": "The household already has a main car. This second one is for the spouse's school run and grocery dash — tight budget, tiny footprint, and you'll happily take a manual petrol with basic safety to keep the spend low.",
+    "preferences": {
+      "budgetMaxLakh": 6,
+      "budgetMinLakh": 3,
+      "seats": 5,
+      "fuel": ["petrol", "cng", "electric"],
+      "transmission": "manual",
+      "body": ["hatchback"],
+      "boot": "small",
+      "safetyMin": 2,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "Sub ₹6L sticker keeps the household spend in check",
+      "Sub-4m hatchback for the tightest parking",
+      "Light controls for the second driver in the family",
+      "Cheap insurance and minimal running cost"
+    ],
+    "flexibility": ["fuel", "safetyMin", "fuelEfficiencyKmplMin"]
+  },
+  {
+    "id": "enthusiast-driver",
+    "title": "Enthusiast driver",
+    "tagline": "Driving feel comes first — boot can wait",
+    "emoji": "🏁",
+    "description": "You read every Autocar review and watch every PowerDrift video. You want a car with character — a punchy petrol, sharp steering, the option of a manual gearbox — even if it means a smaller boot and worse fuel economy than the spreadsheet says you should buy.",
+    "preferences": {
+      "budgetMaxLakh": 16,
+      "budgetMinLakh": 10,
+      "seats": 5,
+      "fuel": ["petrol"],
+      "body": ["hatchback", "sedan", "compact-suv"],
+      "boot": "small",
+      "safetyMin": 4,
+      "fuelEfficiencyKmplMin": 14
+    },
+    "highlights": [
+      "Eager petrol engine with character",
+      "Sharp steering and well-judged chassis",
+      "Manual or automatic — whichever drives better",
+      "4-star+ safety so the fun stays guilt-free"
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "boot"]
+  },
+  {
+    "id": "retired-comfort",
+    "title": "Retired comfort buyer",
+    "tagline": "Easy in, easy out, soft over potholes",
+    "emoji": "🧓",
+    "description": "Retired and done with stick-shifts and bone-shaking suspension. You want a high-set seat for easy ingress, an automatic gearbox, a soft ride that takes the sting out of broken roads, and enough safety kit to give the family peace of mind.",
+    "preferences": {
+      "budgetMaxLakh": 14,
+      "budgetMinLakh": 9,
+      "seats": 5,
+      "fuel": ["petrol", "hybrid", "diesel"],
+      "transmission": "automatic",
+      "body": ["compact-suv", "suv"],
+      "boot": "medium",
+      "safetyMin": 4,
+      "parkingFriendly": true
+    },
+    "highlights": [
+      "High SUV seating for easy ingress / egress",
+      "Automatic gearbox — no clutch fatigue",
+      "Soft, absorbent ride over broken city roads",
+      "4-star+ safety with the family-pleasing kit"
+    ],
+    "flexibility": ["fuelEfficiencyKmplMin", "boot"]
   }
 ]

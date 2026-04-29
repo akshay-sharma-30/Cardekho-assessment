@@ -2,19 +2,91 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { repo } from '@/lib/repo';
 import { matchCarsToPersona } from '@/lib/matcher';
-import type { MatchResult } from '@/lib/types';
+import type { FuelType, MatchResult, Persona, Transmission } from '@/lib/types';
 import PrefChips from '@/components/PrefChips';
 import CarCard from '@/components/CarCard';
+import PersonaTweakPanel from '@/components/PersonaTweakPanel';
 
 interface PageProps {
   params: { id: string };
+  searchParams: {
+    budget?: string;
+    seats?: string;
+    trans?: string;
+    fuel?: string;
+    safety?: string;
+  };
 }
 
-export default function PersonaPage({ params }: PageProps) {
+const VALID_FUELS: FuelType[] = ['petrol', 'diesel', 'cng', 'hybrid', 'electric'];
+const VALID_SEATS = [4, 5, 7];
+const VALID_SAFETY = [3, 4, 5];
+
+function parseOverrides(
+  searchParams: PageProps['searchParams'],
+): { overrides: Partial<Persona['preferences']>; hasOverride: boolean } {
+  const overrides: Partial<Persona['preferences']> = {};
+  let hasOverride = false;
+
+  // Budget — clamp to [4, 40]
+  if (searchParams.budget) {
+    const n = Number(searchParams.budget);
+    if (!Number.isNaN(n)) {
+      overrides.budgetMaxLakh = Math.min(40, Math.max(4, n));
+      hasOverride = true;
+    }
+  }
+
+  // Seats — must be 4 / 5 / 7
+  if (searchParams.seats) {
+    const n = Number(searchParams.seats);
+    if (VALID_SEATS.includes(n)) {
+      overrides.seats = n;
+      hasOverride = true;
+    }
+  }
+
+  // Transmission — must be manual or automatic
+  if (searchParams.trans === 'manual' || searchParams.trans === 'automatic') {
+    overrides.transmission = searchParams.trans as Transmission;
+    hasOverride = true;
+  }
+
+  // Fuel — comma-split, filter to valid FuelType values
+  if (searchParams.fuel) {
+    const parsed = searchParams.fuel
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s): s is FuelType => VALID_FUELS.includes(s as FuelType));
+    if (parsed.length > 0) {
+      overrides.fuel = parsed;
+      hasOverride = true;
+    }
+  }
+
+  // Safety floor — must be 3 / 4 / 5
+  if (searchParams.safety) {
+    const n = Number(searchParams.safety);
+    if (VALID_SAFETY.includes(n)) {
+      overrides.safetyMin = n;
+      hasOverride = true;
+    }
+  }
+
+  return { overrides, hasOverride };
+}
+
+export default function PersonaPage({ params, searchParams }: PageProps) {
   const persona = repo.persona(params.id);
   if (!persona) notFound();
 
-  const allMatches: MatchResult[] = matchCarsToPersona(persona, repo.allCars());
+  const { overrides, hasOverride } = parseOverrides(searchParams);
+  const tweakedPersona: Persona = {
+    ...persona,
+    preferences: { ...persona.preferences, ...overrides },
+  };
+
+  const allMatches: MatchResult[] = matchCarsToPersona(tweakedPersona, repo.allCars());
   const aboveStretch = allMatches.filter((m: MatchResult) => m.fitTier !== 'stretch');
 
   const heroMatches = allMatches.slice(0, 3);
@@ -50,8 +122,17 @@ export default function PersonaPage({ params }: PageProps) {
             {persona.description}
           </p>
         </div>
-        <PrefChips preferences={persona.preferences} />
+        <div className="space-y-2">
+          {hasOverride && (
+            <span className="inline-flex items-center rounded-full bg-accent-soft text-accent px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider">
+              Tweaked
+            </span>
+          )}
+          <PrefChips preferences={tweakedPersona.preferences} />
+        </div>
       </header>
+
+      <PersonaTweakPanel defaults={persona.preferences} personaId={persona.id} />
 
       {aboveStretch.length === 0 ? (
         <section className="rounded-2xl border border-black/5 bg-white p-10 text-center">

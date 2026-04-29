@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import CompareCart from '@/components/CompareCart';
 
 export const metadata: Metadata = {
   title: 'CarFit — find the car that fits your life',
@@ -17,7 +18,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               <span className="inline-block w-2 h-2 rounded-full bg-accent group-hover:scale-125 transition" />
               <span className="font-semibold tracking-tight text-lg">CarFit</span>
             </a>
-            <nav className="text-sm text-ink-muted">find the car that fits your life</nav>
+            <nav className="flex items-center gap-4 text-sm text-ink-muted">
+              <span className="hidden sm:inline">find the car that fits your life</span>
+              <CompareCart />
+            </nav>
           </div>
         </header>
         <main className="max-w-6xl mx-auto px-5 py-10">{children}</main>

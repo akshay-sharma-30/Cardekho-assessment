@@ -29,6 +29,23 @@ export interface Persona {
   };
   // Curated highlights surfaced on the persona detail page.
   highlights: string[];
+  /**
+   * Preference fields the persona is willing to negotiate on. Used by the
+   * matcher to scale down the weight of these criteria — mismatching them hurts
+   * less. Use the literal field names from `preferences`.
+   */
+  flexibility?: Array<
+    | 'budgetMaxLakh'
+    | 'seats'
+    | 'fuel'
+    | 'transmission'
+    | 'body'
+    | 'boot'
+    | 'safetyMin'
+    | 'fuelEfficiencyKmplMin'
+    | 'parkingFriendly'
+    | 'highwayCommute'
+  >;
 }
 
 export interface MediaLink {

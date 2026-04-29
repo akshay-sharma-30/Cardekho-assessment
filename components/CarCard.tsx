@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import type { MatchResult } from '@/lib/types';
 import MatchScoreBadge from './MatchScoreBadge';
+import CompareButton from './CompareButton';
 
 interface Props {
   match: MatchResult;
@@ -36,6 +37,13 @@ export default function CarCard({ match, expanded = false, personaId }: Props) {
         expanded ? 'w-full p-5 gap-5' : 'w-full p-4 gap-4'
       }`}
     >
+      {/* Compare toggle — absolutely positioned to sit above the image without
+          disturbing the existing flex layout. The button itself stops
+          propagation so clicking it doesn't navigate the parent Link. */}
+      <div className={`absolute z-10 ${expanded ? 'top-3 left-3' : 'top-2 left-2'}`}>
+        <CompareButton carId={car.id} variant="compact" />
+      </div>
+
       <div
         className={`relative shrink-0 overflow-hidden rounded-xl bg-ink-soft/5 ${
           expanded ? 'w-[220px] h-[160px]' : 'w-[140px] h-[100px]'
